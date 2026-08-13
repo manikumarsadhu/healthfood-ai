@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment & Temp
+.env
+.env.*
+.dev.vars
+*.log
+.wrangler/
+dist/
+build/
+

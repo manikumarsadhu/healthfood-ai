@@ -1,0 +1,6 @@
+# Robots.txt for HealthFood AI
+User-agent: *
+Allow: /
+
+# Sitemap Location
+Sitemap: https://healthfood-ai.pages.dev/sitemap.xml

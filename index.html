@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HealthFood AI — Evidence-Based Nutrition & Intelligent AI Assistant</title>
+  <meta name="description" content="Search verified food nutrition facts, calories, macros, vitamins, minerals, and consult an AI assistant for health explanations." />
+  
+  <!-- Canonical & SEO Meta Tags -->
+  <link rel="canonical" href="https://healthfood-ai.pages.dev/" />
+  
+  <!-- Open Graph / Social Sharing -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://healthfood-ai.pages.dev/" />
+  <meta property="og:title" content="HealthFood AI — Evidence-Based Nutrition & AI Assistant" />
+  <meta property="og:description" content="Search verified food nutrition facts, calories, macros, vitamins, minerals, and consult an AI assistant for health explanations." />
+  <meta property="og:image" content="https://healthfood-ai.pages.dev/assets/icons/icon-512.svg" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="HealthFood AI — Evidence-Based Nutrition & AI Assistant" />
+  <meta name="twitter:description" content="Search verified food nutrition facts, calories, macros, vitamins, minerals, and consult an AI assistant." />
+  <meta name="twitter:image" content="https://healthfood-ai.pages.dev/assets/icons/icon-512.svg" />
+
+  <!-- PWA Manifest & Meta Tags -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#10b981" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.svg" />
+
+  <!-- Schema.org JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "HealthFood AI",
+    "url": "https://healthfood-ai.pages.dev/",
+    "description": "Multilingual nutrition and food-health education SPA/PWA using serverless architecture and shared AI caching.",
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "All"
+  }
+  </script>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/themes.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+
+  <!-- Glassmorphism Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <a href="#" class="brand-logo">
+        <div class="brand-icon">🥗</div>
+        <span data-i18n="app_title">HealthFood AI</span>
+      </a>
+
+      <div class="header-actions">
+        <!-- Language Switcher -->
+        <select id="language-select" class="select-control" aria-label="Select Language">
+          <option value="en">🌐 English</option>
+          <option value="te">🌐 తెలుగు (Telugu)</option>
+          <option value="hi">🌐 हिंदी (Hindi)</option>
+        </select>
+
+        <!-- Theme Toggle Button -->
+        <button id="theme-toggle-btn" class="icon-btn" title="Toggle Theme">☀️</button>
+
+        <!-- Notification Toggle Button -->
+        <button id="notification-toggle-btn" class="icon-btn" title="Toggle Daily Tip Notifications">🔕</button>
+
+        <!-- AI Chat Floating Trigger -->
+        <button id="open-chat-btn" class="primary-btn">
+          <span>✨</span>
+          <span data-i18n="ask_ai_btn">Ask AI Assistant</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Wrapper -->
+  <main class="main-wrapper">
+
+    <!-- Hero / Daily Tip Banner -->
+    <section class="hero-card">
+      <div class="hero-icon">💡</div>
+      <div class="hero-content">
+        <div class="hero-title">
+          <span data-i18n="daily_tip_title">Daily Health Insight</span>
+          <span style="font-size: 0.75rem; background: var(--primary-light); color: var(--primary); padding: 0.15rem 0.5rem; border-radius: 10px;">Verified Fact</span>
+        </div>
+        <p id="daily-tip-text" class="hero-text">Loading today's evidence-based health tip...</p>
+      </div>
+    </section>
+
+    <!-- Controls: Search & Category Chips -->
+    <section class="controls-section">
+      <div class="search-box-container">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" class="search-input" data-i18n="search_placeholder" placeholder="Search foods, nutrients, calories, or health benefits..." />
+      </div>
+
+      <!-- Category Filter Chips -->
+      <div id="category-chips-wrapper" class="category-chips-wrapper">
+        <!-- Dynamically rendered categories -->
+      </div>
+    </section>
+
+    <!-- Food Cards Grid -->
+    <section>
+      <div id="food-grid" class="food-grid">
+        <!-- Dynamically rendered food cards -->
+      </div>
+    </section>
+
+    <!-- AdSense Placement Slot (Non-disruptive) -->
+    <div class="adsense-container">
+      <span>📢 Advertisement Placeholder (Google AdSense Slot)</span>
+    </div>
+
+    <!-- Voluntary UPI Donation Card -->
+    <section class="donation-card">
+      <div class="donation-content">
+        <div class="donation-title">
+          <span>❤️</span>
+          <span>Support This Free Project</span>
+        </div>
+        <p class="donation-desc">HealthFood AI is 100% free and open to everyone. If you find this resource helpful, consider supporting our serverless infrastructure via UPI.</p>
+      </div>
+      <div class="upi-badge">
+        <span>📲 UPI:</span>
+        <span>healthfood@upi</span>
+      </div>
+    </section>
+
+    <!-- Legal Disclaimer Footer -->
+    <footer class="app-footer">
+      <p data-i18n="disclaimer">Information is provided for educational purposes only and is not a substitute for professional medical advice.</p>
+      <div class="footer-legal-links">
+        <a class="footer-link" onclick="window.legalManager.openPolicy('disclaimer')">Medical Disclaimer</a>
+        <span>•</span>
+        <a class="footer-link" onclick="window.legalManager.openPolicy('privacy')">Privacy Policy</a>
+        <span>•</span>
+        <a class="footer-link" onclick="window.legalManager.openPolicy('terms')">Terms of Service</a>
+      </div>
+      <p style="margin-top: 0.8rem;">© 2026 HealthFood AI • Powered by Cloudflare Workers & D1</p>
+    </footer>
+
+  </main>
+
+  <!-- Modal Backdrop -->
+  <div id="modal-backdrop" class="modal-backdrop"></div>
+
+  <!-- Food Detail Drawer -->
+  <aside id="detail-drawer" class="detail-drawer">
+    <div class="drawer-header">
+      <div>
+        <h2 id="drawer-title" class="drawer-title">Food Name</h2>
+        <div id="drawer-subtitle" style="font-size: 0.85rem; color: var(--text-muted);">Canonical Name</div>
+      </div>
+      <button id="close-drawer-btn" class="icon-btn">✕</button>
+    </div>
+
+    <div class="drawer-body">
+      <p id="drawer-desc" style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.95rem;"></p>
+
+      <!-- Macronutrients -->
+      <div class="section-label" data-i18n="macronutrients">Macronutrients</div>
+      <div id="drawer-macros" class="macro-grid-full"></div>
+
+      <!-- Micronutrients -->
+      <div class="section-label" data-i18n="micronutrients">Vitamins & Minerals</div>
+      <div id="drawer-micros" style="margin-bottom: 1.75rem;"></div>
+
+      <!-- Health Benefits -->
+      <div class="section-label" data-i18n="health_benefits">Health Benefits</div>
+      <div id="drawer-benefits" style="margin-bottom: 1.75rem;"></div>
+
+      <!-- AI Actions -->
+      <div class="section-label" data-i18n="ai_actions_title">AI Assistant Actions</div>
+      <div class="ai-actions-grid">
+        <button class="ai-action-btn" onclick="window.chatbotController.triggerQuickAction('explain_simple')">
+          <span>💡</span> <span data-i18n="action_explain_simple">Explain simply</span>
+        </button>
+        <button class="ai-action-btn" onclick="window.chatbotController.triggerQuickAction('vitamins')">
+          <span>💊</span> <span data-i18n="action_vitamins">Vitamins breakdown</span>
+        </button>
+        <button class="ai-action-btn" onclick="window.chatbotController.triggerQuickAction('meal_ideas')">
+          <span>🍳</span> <span data-i18n="action_meal_ideas">Meal preparation ideas</span>
+        </button>
+        <button class="ai-action-btn" onclick="window.chatbotController.triggerQuickAction('health_support')">
+          <span>❤️</span> <span data-i18n="action_health_support">Health support overview</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- AI Chat Drawer -->
+  <aside id="chat-drawer" class="chat-drawer">
+    <div class="drawer-header">
+      <div>
+        <h3 class="drawer-title" style="font-size: 1.1rem;" data-i18n="ai_modal_title">HealthFood AI Assistant</h3>
+        <div style="font-size: 0.75rem; color: var(--text-muted);" data-i18n="ai_modal_subtitle">Ask questions about nutrition and health</div>
+      </div>
+      <button id="close-chat-btn" class="icon-btn">✕</button>
+    </div>
+
+    <div id="chat-messages" class="chat-messages">
+      <div class="chat-bubble ai">
+        Hello! I'm your HealthFood AI Assistant. You can ask me questions about calories, vitamins, food pairing, or how specific foods support your health goals.
+      </div>
+    </div>
+
+    <div class="chat-input-area">
+      <input type="text" id="chat-input" class="chat-input" data-i18n="ai_input_placeholder" placeholder="Ask a nutrition question..." />
+      <button id="chat-send-btn" class="primary-btn" style="padding: 0.6rem 0.9rem;" data-i18n="send">Send</button>
+    </div>
+  </aside>
+
+  <!-- Legal & Policy Drawer -->
+  <aside id="legal-drawer" class="legal-drawer">
+    <div class="drawer-header">
+      <h2 id="legal-drawer-title" class="drawer-title">Legal Information</h2>
+      <button onclick="window.legalManager.closeModal()" class="icon-btn">✕</button>
+    </div>
+    <div id="legal-drawer-body" class="drawer-body"></div>
+  </aside>
+
+  <!-- JavaScript Modules -->
+  <script src="js/api-client.js"></script>
+  <script src="js/theme-manager.js"></script>
+  <script src="js/language-manager.js"></script>
+  <script src="js/notification-manager.js"></script>
+  <script src="js/legal.js"></script>
+  <script src="js/food.js"></script>
+  <script src="js/chatbot.js"></script>
+  <script src="js/app.js"></script>
+
+  <!-- PWA Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('[ServiceWorker] Registered successfully:', reg.scope))
+          .catch(err => console.warn('[ServiceWorker] Registration failed:', err));
+      });
+    }
+  </script>
+</body>
+</html>
