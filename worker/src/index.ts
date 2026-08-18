@@ -228,7 +228,7 @@ const DEFAULT_FOOD_METADATA: Record<string, { image_url: string; macronutrients:
     macronutrients: { calories: 99, protein_g: 1.4, carbs_g: 24.7, fat_g: 0.6, fiber_g: 2.6 }
   },
   watermelon: {
-    image_url: "https://images.unsplash.com/photo-1587049352847-4a222e784d38?auto=format&fit=crop&w=600&q=80",
+    image_url: "https://images.unsplash.com/photo-1589984662646-e7b2e4962f18?auto=format&fit=crop&w=600&q=80",
     macronutrients: { calories: 46, protein_g: 0.9, carbs_g: 11.5, fat_g: 0.2, fiber_g: 0.6 }
   },
   grapes: {
@@ -310,7 +310,7 @@ const DEFAULT_FOOD_METADATA: Record<string, { image_url: string; macronutrients:
     macronutrients: { calories: 116, protein_g: 9.0, carbs_g: 20.0, fat_g: 0.4, fiber_g: 7.9 }
   },
   peanut: {
-    image_url: "https://images.unsplash.com/photo-1567892999348-6466986561f7?auto=format&fit=crop&w=600&q=80",
+    image_url: "https://images.unsplash.com/photo-1623428187969-5da2dcea5ebf?auto=format&fit=crop&w=600&q=80",
     macronutrients: { calories: 567, protein_g: 25.8, carbs_g: 16.1, fat_g: 49.2, fiber_g: 8.5 }
   },
   almonds: {
@@ -353,7 +353,7 @@ const CATEGORY_FALLBACKS: Record<string, { image_url: string; macronutrients: { 
     macronutrients: { calories: 120, protein_g: 9.0, carbs_g: 20.0, fat_g: 0.5, fiber_g: 7.5 }
   },
   "nuts-seeds": {
-    image_url: "https://images.unsplash.com/photo-1567892999348-6466986561f7?auto=format&fit=crop&w=600&q=80",
+    image_url: "https://images.unsplash.com/photo-1623428187969-5da2dcea5ebf?auto=format&fit=crop&w=600&q=80",
     macronutrients: { calories: 570, protein_g: 20.0, carbs_g: 18.0, fat_g: 50.0, fiber_g: 8.0 }
   }
 };
