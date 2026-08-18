@@ -16,7 +16,7 @@ class LanguageManager {
 
   async loadLanguage(lang) {
     try {
-      const res = await fetch(`/i18n/${lang}.json`);
+      const res = await fetch(`./i18n/${lang}.json`);
       if (res.ok) {
         this.translations[lang] = await res.json();
       }

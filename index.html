@@ -278,8 +278,8 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(reg => console.log('[ServiceWorker] Registered successfully:', reg.scope))
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('[ServiceWorker] Registered:', reg.scope))
           .catch(err => console.warn('[ServiceWorker] Registration failed:', err));
       });
     }
