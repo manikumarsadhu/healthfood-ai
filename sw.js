@@ -1,4 +1,4 @@
-const CACHE_NAME = 'healthfood-ai-v1';
+const CACHE_NAME = 'healthfood-ai-v1.1';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -50,6 +50,11 @@ self.addEventListener('activate', (event) => {
 // Fetch Event — Cache-First for static assets, Network-First for API
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+
+  // Skip non-http/https requests (e.g., chrome-extension://, moz-extension://)
+  if (!url.protocol.startsWith('http')) {
+    return;
+  }
 
   // Handle API Requests (Network First, then cache)
   if (url.pathname.startsWith('/api/')) {

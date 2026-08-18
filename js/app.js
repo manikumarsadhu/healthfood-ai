@@ -7,13 +7,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   let searchQuery = '';
   let searchDebounceTimeout = null;
 
+  const getCategoryIcon = (slug, icon) => {
+    const map = {
+      'all': 'grid_view',
+      'fruits': 'nutrition',
+      'vegetables': 'eco',
+      'meat': 'restaurant',
+      'fish-seafood': 'set_meal',
+      'fish': 'set_meal',
+      'eggs': 'egg',
+      'grains': 'grain',
+      'legumes': 'local_florist',
+      'nuts-seeds': 'grass',
+      'nuts': 'grass',
+      'dairy': 'water_drop'
+    };
+    const iconName = (icon && icon.trim() && !icon.includes('🥦') && !icon.includes('🥗')) ? icon.trim() : (map[(slug || '').toLowerCase()] || 'restaurant');
+    if (iconName.startsWith('<span')) return iconName;
+    return `<span class="material-symbols-outlined">${iconName}</span>`;
+  };
+
   // Initialize Categories Chips
   const categoriesWrapperEl = document.getElementById('category-chips-wrapper');
   if (categoriesWrapperEl) {
     const categories = await window.apiClient.getCategories();
     categoriesWrapperEl.innerHTML = categories.map(cat => `
       <button class="category-chip ${cat.slug === activeCategory ? 'active' : ''}" data-category="${cat.slug}">
-        <span>${cat.icon || '🥦'}</span>
+        ${getCategoryIcon(cat.slug, cat.icon)}
         <span>${cat.name}</span>
       </button>
     `).join('');
@@ -46,6 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     searchInputEl.addEventListener('input', (e) => {
       clearTimeout(searchDebounceTimeout);
       searchQuery = e.target.value.trim();
+      window.currentSearchQuery = searchQuery;
       searchDebounceTimeout = setTimeout(() => {
         loadFoodGrid();
       }, 250);
@@ -113,4 +134,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       window.chatbotController.closeChat();
     });
   }
+
+  // Global Keyboard Accessibility (a11y) - Dismiss modals on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      window.foodRenderer?.closeDetail();
+      window.chatbotController?.closeChat();
+      if (typeof window.legalController?.closeModal === 'function') {
+        window.legalController.closeModal();
+      }
+    }
+  });
 });

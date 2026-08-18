@@ -108,6 +108,32 @@ FROM categories
 WHERE slug = 'fruits';
 
 
+INSERT INTO foods
+    (slug, name, category_id, food_type, description, serving_size_g)
+SELECT
+    'papaya',
+    'Papaya',
+    id,
+    'vegetarian',
+    'A tropical fruit rich in vitamin C, vitamin A, folate, and digestive enzymes like papain.',
+    100
+FROM categories
+WHERE slug = 'fruits';
+
+
+INSERT INTO foods
+    (slug, name, category_id, food_type, description, serving_size_g)
+SELECT
+    'avocado',
+    'Avocado',
+    id,
+    'vegetarian',
+    'A nutrient-dense tropical fruit packed with heart-healthy monounsaturated fats, potassium, vitamin E, and fiber.',
+    100
+FROM categories
+WHERE slug = 'fruits';
+
+
 -- Vegetables
 
 INSERT INTO foods

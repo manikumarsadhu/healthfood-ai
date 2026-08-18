@@ -6,6 +6,7 @@ import {
 } from "./types";
 
 export interface ProviderEnvSecrets {
+  CEREBRAS_API_KEY?: string;
   GEMINI_API_KEY?: string;
   GROQ_API_KEY?: string;
   OPENROUTER_API_KEY?: string;
@@ -31,7 +32,15 @@ function isRateLimitOrQuotaError(status: number, bodyText: string): boolean {
 export class GeminiProvider implements AIProvider {
   name = "Gemini";
   private apiKey: string;
-  private model = "gemini-1.5-flash";
+  private candidateModels = [
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite",
+    "gemini-3.7-flash",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash"
+  ];
 
   constructor(apiKey?: string) {
     this.apiKey = apiKey || "";
@@ -46,62 +55,71 @@ export class GeminiProvider implements AIProvider {
       throw new ProviderUnavailableException(this.name, "API key not configured");
     }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${encodeURIComponent(this.apiKey)}`;
+    let lastError: Error | null = null;
+    for (const model of this.candidateModels) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(this.apiKey)}`;
 
-    const contents = [];
-    if (systemPrompt) {
-      contents.push({
-        role: "user",
-        parts: [{ text: `[System Instruction]\n${systemPrompt}` }],
-      });
-      contents.push({
-        role: "model",
-        parts: [{ text: "Understood. I will strictly follow these instructions." }],
-      });
-    }
-    contents.push({
-      role: "user",
-      parts: [{ text: prompt }],
-    });
+        const contents = [];
+        if (systemPrompt) {
+          contents.push({
+            role: "user",
+            parts: [{ text: `[System Instruction]\n${systemPrompt}` }],
+          });
+          contents.push({
+            role: "model",
+            parts: [{ text: "Understood. I will strictly follow these instructions." }],
+          });
+        }
+        contents.push({
+          role: "user",
+          parts: [{ text: prompt }],
+        });
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents,
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 1000,
-        },
-      }),
-    });
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents,
+            generationConfig: {
+              temperature: 0.3,
+              maxOutputTokens: 1000,
+            },
+          }),
+        });
 
-    const resText = await response.text();
+        const resText = await response.text();
 
-    if (!response.ok || isRateLimitOrQuotaError(response.status, resText)) {
-      if (isRateLimitOrQuotaError(response.status, resText)) {
-        throw new RateLimitException(this.name, `HTTP ${response.status}: ${resText.slice(0, 200)}`, response.status);
+        if (!response.ok || isRateLimitOrQuotaError(response.status, resText)) {
+          if (isRateLimitOrQuotaError(response.status, resText)) {
+            throw new RateLimitException(this.name, `HTTP ${response.status}: ${resText.slice(0, 200)}`, response.status);
+          }
+          if (response.status === 404 || resText.includes("not found")) {
+            lastError = new Error(`[Gemini] Model ${model} returned 404: ${resText.slice(0, 150)}`);
+            continue;
+          }
+          throw new Error(`[Gemini] Request failed with HTTP ${response.status}: ${resText.slice(0, 200)}`);
+        }
+
+        const data = JSON.parse(resText);
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) {
+          throw new Error("[Gemini] Empty text in response candidate");
+        }
+
+        return {
+          content: text,
+          modelProvider: this.name,
+          modelName: model,
+          generatedAt: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        if (err instanceof RateLimitException) throw err;
+        lastError = err;
       }
-      throw new Error(`[Gemini] Request failed with HTTP ${response.status}: ${resText.slice(0, 200)}`);
     }
 
-    try {
-      const data = JSON.parse(resText);
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!text) {
-        throw new Error("[Gemini] Empty text in response candidate");
-      }
-
-      return {
-        content: text,
-        modelProvider: this.name,
-        modelName: this.model,
-        generatedAt: new Date().toISOString(),
-      };
-    } catch (err: any) {
-      if (err instanceof RateLimitException) throw err;
-      throw new Error(`[Gemini] Failed to parse response: ${err.message}`);
-    }
+    throw lastError || new Error("[Gemini] All candidate models failed");
   }
 }
 
@@ -109,7 +127,14 @@ export class GeminiProvider implements AIProvider {
 export class GroqProvider implements AIProvider {
   name = "Groq";
   private apiKey: string;
-  private model = "llama-3.3-70b-versatile";
+  private candidateModels = [
+    "openai/gpt-oss-20b",
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.6-27b",
+    "groq/compound",
+    "groq/compound-mini",
+    "llama-3.1-8b-instant"
+  ];
 
   constructor(apiKey?: string) {
     this.apiKey = apiKey || "";
@@ -124,53 +149,62 @@ export class GroqProvider implements AIProvider {
       throw new ProviderUnavailableException(this.name, "API key not configured");
     }
 
-    const url = "https://api.groq.com/openai/v1/chat/completions";
-    const messages = [];
-    if (systemPrompt) {
-      messages.push({ role: "system", content: systemPrompt });
-    }
-    messages.push({ role: "user", content: prompt });
+    let lastError: Error | null = null;
+    for (const model of this.candidateModels) {
+      try {
+        const url = "https://api.groq.com/openai/v1/chat/completions";
+        const messages = [];
+        if (systemPrompt) {
+          messages.push({ role: "system", content: systemPrompt });
+        }
+        messages.push({ role: "user", content: prompt });
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${this.apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: this.model,
-        messages,
-        temperature: 0.3,
-        max_tokens: 1000,
-      }),
-    });
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${this.apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model,
+            messages,
+            temperature: 0.3,
+            max_tokens: 1000,
+          }),
+        });
 
-    const resText = await response.text();
+        const resText = await response.text();
 
-    if (!response.ok || isRateLimitOrQuotaError(response.status, resText)) {
-      if (isRateLimitOrQuotaError(response.status, resText)) {
-        throw new RateLimitException(this.name, `HTTP ${response.status}: ${resText.slice(0, 200)}`, response.status);
+        if (!response.ok || isRateLimitOrQuotaError(response.status, resText)) {
+          if (isRateLimitOrQuotaError(response.status, resText)) {
+            throw new RateLimitException(this.name, `HTTP ${response.status}: ${resText.slice(0, 200)}`, response.status);
+          }
+          if (response.status === 404 || resText.includes("model_not_found")) {
+            lastError = new Error(`[Groq] Model ${model} returned 404: ${resText.slice(0, 150)}`);
+            continue;
+          }
+          throw new Error(`[Groq] Request failed with HTTP ${response.status}: ${resText.slice(0, 200)}`);
+        }
+
+        const data = JSON.parse(resText);
+        const text = data?.choices?.[0]?.message?.content;
+        if (!text) {
+          throw new Error("[Groq] Empty choices in response");
+        }
+
+        return {
+          content: text,
+          modelProvider: this.name,
+          modelName: model,
+          generatedAt: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        if (err instanceof RateLimitException) throw err;
+        lastError = err;
       }
-      throw new Error(`[Groq] Request failed with HTTP ${response.status}: ${resText.slice(0, 200)}`);
     }
 
-    try {
-      const data = JSON.parse(resText);
-      const text = data?.choices?.[0]?.message?.content;
-      if (!text) {
-        throw new Error("[Groq] Empty choices in response");
-      }
-
-      return {
-        content: text,
-        modelProvider: this.name,
-        modelName: this.model,
-        generatedAt: new Date().toISOString(),
-      };
-    } catch (err: any) {
-      if (err instanceof RateLimitException) throw err;
-      throw new Error(`[Groq] Failed to parse response: ${err.message}`);
-    }
+    throw lastError || new Error("[Groq] All candidate models failed");
   }
 }
 
@@ -178,7 +212,13 @@ export class GroqProvider implements AIProvider {
 export class OpenRouterProvider implements AIProvider {
   name = "OpenRouter";
   private apiKey: string;
-  private model = "google/gemini-2.5-flash:free";
+  private candidateModels = [
+    "openrouter/free",
+    "nvidia/nemotron-3.5-lightning:free",
+    "dots-studio/dots-3-note-preview:free",
+    "meta-llama/llama-3.3-70b-instruct:free",
+    "meta-llama/llama-3.1-8b-instruct:free"
+  ];
 
   constructor(apiKey?: string) {
     this.apiKey = apiKey || "";
@@ -193,55 +233,142 @@ export class OpenRouterProvider implements AIProvider {
       throw new ProviderUnavailableException(this.name, "API key not configured");
     }
 
-    const url = "https://openrouter.ai/api/v1/chat/completions";
-    const messages = [];
-    if (systemPrompt) {
-      messages.push({ role: "system", content: systemPrompt });
-    }
-    messages.push({ role: "user", content: prompt });
+    let lastError: Error | null = null;
+    for (const model of this.candidateModels) {
+      try {
+        const url = "https://openrouter.ai/api/v1/chat/completions";
+        const messages = [];
+        if (systemPrompt) {
+          messages.push({ role: "system", content: systemPrompt });
+        }
+        messages.push({ role: "user", content: prompt });
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${this.apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://healthfood.ai",
-        "X-Title": "HealthFood AI",
-      },
-      body: JSON.stringify({
-        model: this.model,
-        messages,
-        temperature: 0.3,
-        max_tokens: 1000,
-      }),
-    });
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${this.apiKey}`,
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://healthfood.ai",
+            "X-Title": "HealthFood AI",
+          },
+          body: JSON.stringify({
+            model,
+            messages,
+            temperature: 0.3,
+            max_tokens: 1000,
+          }),
+        });
 
-    const resText = await response.text();
+        const resText = await response.text();
 
-    if (!response.ok || isRateLimitOrQuotaError(response.status, resText)) {
-      if (isRateLimitOrQuotaError(response.status, resText)) {
-        throw new RateLimitException(this.name, `HTTP ${response.status}: ${resText.slice(0, 200)}`, response.status);
+        if (!response.ok || isRateLimitOrQuotaError(response.status, resText)) {
+          if (isRateLimitOrQuotaError(response.status, resText)) {
+            throw new RateLimitException(this.name, `HTTP ${response.status}: ${resText.slice(0, 200)}`, response.status);
+          }
+          if (response.status === 404 || resText.includes("404")) {
+            lastError = new Error(`[OpenRouter] Model ${model} returned 404: ${resText.slice(0, 150)}`);
+            continue;
+          }
+          throw new Error(`[OpenRouter] Request failed with HTTP ${response.status}: ${resText.slice(0, 200)}`);
+        }
+
+        const data = JSON.parse(resText);
+        const text = data?.choices?.[0]?.message?.content;
+        if (!text) {
+          throw new Error("[OpenRouter] Empty choices in response");
+        }
+
+        return {
+          content: text,
+          modelProvider: this.name,
+          modelName: model,
+          generatedAt: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        if (err instanceof RateLimitException) throw err;
+        lastError = err;
       }
-      throw new Error(`[OpenRouter] Request failed with HTTP ${response.status}: ${resText.slice(0, 200)}`);
     }
 
-    try {
-      const data = JSON.parse(resText);
-      const text = data?.choices?.[0]?.message?.content;
-      if (!text) {
-        throw new Error("[OpenRouter] Empty choices in response");
+    throw lastError || new Error("[OpenRouter] All candidate models failed");
+  }
+}
+
+// 4. Cerebras Provider (Ultra-fast Llama inference free tier)
+export class CerebrasProvider implements AIProvider {
+  name = "Cerebras";
+  private apiKey: string;
+  private candidateModels = ["gpt-oss-120b", "gemma-4-31b", "llama-3.3-70b", "llama3.1-8b"];
+
+  constructor(apiKey?: string) {
+    this.apiKey = apiKey || "";
+  }
+
+  isConfigured(): boolean {
+    return Boolean(this.apiKey && this.apiKey.trim().length > 0);
+  }
+
+  async generateText(prompt: string, systemPrompt?: string): Promise<AIResponse> {
+    if (!this.isConfigured()) {
+      throw new ProviderUnavailableException(this.name, "API key not configured");
+    }
+
+    let lastError: Error | null = null;
+    for (const model of this.candidateModels) {
+      try {
+        const url = "https://api.cerebras.ai/v1/chat/completions";
+        const messages = [];
+        if (systemPrompt) {
+          messages.push({ role: "system", content: systemPrompt });
+        }
+        messages.push({ role: "user", content: prompt });
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${this.apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model,
+            messages,
+            temperature: 0.3,
+            max_tokens: 1000,
+          }),
+        });
+
+        const resText = await response.text();
+
+        if (!response.ok || isRateLimitOrQuotaError(response.status, resText)) {
+          if (isRateLimitOrQuotaError(response.status, resText)) {
+            throw new RateLimitException(this.name, `HTTP ${response.status}: ${resText.slice(0, 200)}`, response.status);
+          }
+          if (response.status === 404 || resText.includes("model_not_found")) {
+            lastError = new Error(`[Cerebras] Model ${model} returned 404: ${resText.slice(0, 150)}`);
+            continue;
+          }
+          throw new Error(`[Cerebras] Request failed with HTTP ${response.status}: ${resText.slice(0, 200)}`);
+        }
+
+        const data = JSON.parse(resText);
+        const text = data?.choices?.[0]?.message?.content;
+        if (!text) {
+          throw new Error("[Cerebras] Empty choices in response");
+        }
+
+        return {
+          content: text,
+          modelProvider: this.name,
+          modelName: model,
+          generatedAt: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        if (err instanceof RateLimitException) throw err;
+        lastError = err;
       }
-
-      return {
-        content: text,
-        modelProvider: this.name,
-        modelName: this.model,
-        generatedAt: new Date().toISOString(),
-      };
-    } catch (err: any) {
-      if (err instanceof RateLimitException) throw err;
-      throw new Error(`[OpenRouter] Failed to parse response: ${err.message}`);
     }
+
+    throw lastError || new Error("[Cerebras] All candidate models failed");
   }
 }
 
@@ -254,6 +381,7 @@ export class AIProviderManager {
       this.providers = customProviders;
     } else {
       this.providers = [
+        new CerebrasProvider(secrets.CEREBRAS_API_KEY),
         new GeminiProvider(secrets.GEMINI_API_KEY),
         new GroqProvider(secrets.GROQ_API_KEY),
         new OpenRouterProvider(secrets.OPENROUTER_API_KEY),
@@ -283,6 +411,10 @@ export class AIProviderManager {
       try {
         console.log(`[AIProviderManager] Attempting provider: ${provider.name}`);
         const result = await provider.generateText(prompt, systemPrompt);
+
+        console.log(`\n============================================================`);
+        console.log(`✅ [AI SUCCESS] Responded using provider: ${result.modelProvider} (Model: ${result.modelName})`);
+        console.log(`============================================================\n`);
 
         return {
           ...result,
