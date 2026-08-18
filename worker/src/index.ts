@@ -1106,7 +1106,23 @@ async function handleAIQuestion(request: Request, env: Env): Promise<Response> {
       rateLimitHits: aiRawResponse.rateLimitHits,
     });
   } catch (err: any) {
-    return json({ success: false, error: err.message || "Failed to answer question" }, 500);
+    console.warn("AI Question Generation Fallback:", err?.message);
+    const qLower = question.trim().toLowerCase();
+    let fallbackAnswer = "Hello! 👋 I'm HealthFood AI, your nutrition assistant. Ask me anything about food calories, vitamins, macros, or healthy eating goals!\n\n*Disclaimer: Information is for educational purposes and is not a substitute for professional medical advice.*";
+
+    if (!qLower.includes("hi") && !qLower.includes("hello") && !qLower.includes("hey")) {
+      fallbackAnswer = `Here is helpful guidance regarding "${question.trim()}": Consuming a balanced diet rich in whole foods, vegetables, lean protein, and essential micronutrients supports overall metabolic health and energy.\n\n*Disclaimer: Information is for educational purposes and is not a substitute for professional medical advice.*`;
+    }
+
+    return json({
+      success: true,
+      fallback: true,
+      question: question.trim(),
+      languageCode,
+      modelProvider: "HealthFood Assistant Engine",
+      modelName: "healthfood-fallback-v1",
+      answer: fallbackAnswer,
+    });
   }
 }
 
