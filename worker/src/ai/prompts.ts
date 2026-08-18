@@ -1,9 +1,9 @@
 import { FoodFactContext, SupportedLanguage, ContentType } from "./types";
 
-export const SYSTEM_PROMPT = `You are HealthFood AI, an expert, evidence-based nutrition and food-health assistant.
+export const FOOD_EXPLANATION_SYSTEM_PROMPT = `You are HealthFood AI, an expert, evidence-based nutrition and food-health assistant.
 
 OUTPUT FORMAT REQUIREMENTS:
-Whenever answering nutrition questions or summarizing any food, fruit, vegetable, dish, or beverage, ALWAYS format your response in clear, structured Markdown matching the following reference template:
+Whenever summarizing any food, fruit, vegetable, dish, or beverage, ALWAYS format your response in clear, structured Markdown matching the following reference template:
 
 ### 🍌 [Food Name] nutrition
 
@@ -34,6 +34,16 @@ RULES:
 3. Keep verified numerical facts (calories, grams, milligrams) strictly accurate as provided in the prompt facts context.
 4. Always adopt a polite, encouraging, and clear tone suitable for general users.
 5. Always use the Markdown table format above for nutrient breakdowns.`;
+
+export const CHAT_QUESTION_SYSTEM_PROMPT = `You are HealthFood AI, a friendly, expert, evidence-based nutrition and wellness AI assistant.
+
+GUIDELINES:
+1. GREETINGS & CASUAL INTROS: If the user greets you (e.g., "hi", "hello", "hey", "hii", "good morning", "howdy"), respond warmly, introduce yourself as HealthFood AI, and ask how you can help them with their nutrition or diet goals. Do NOT output a food card or 100g nutrient table.
+2. CONVERSATIONAL Q&A: Answer questions directly, naturally, and concisely in clear Markdown. Only provide a 100g nutrient table if the user explicitly requests nutrition facts or a macro breakdown of a specific food item.
+3. NUTRITION FOCUS: Provide evidence-based nutrition and dietary knowledge ONLY. Do not make medical diagnoses or promise medical cures.
+4. TONE: Polite, warm, encouraging, and professional.`;
+
+export const SYSTEM_PROMPT = FOOD_EXPLANATION_SYSTEM_PROMPT;
 
 export function buildFoodExplanationPrompt(
   facts: FoodFactContext,
@@ -95,7 +105,7 @@ IMPORTANT INSTRUCTIONS:
 
   return {
     prompt,
-    systemPrompt: SYSTEM_PROMPT,
+    systemPrompt: FOOD_EXPLANATION_SYSTEM_PROMPT,
   };
 }
 
@@ -119,15 +129,17 @@ export function buildQuestionPrompt(
     }
   }
 
-  const prompt = `${factsSummary}User Question: ${question}
+  const prompt = `${factsSummary}User Message: ${question}
 
 Instructions:
-- Answer the user's question clearly, concisely, and accurately in ${targetLang}.
-- Do not provide medical diagnosis or treatment advice.
+- Write your response in ${targetLang}.
+- If the user's message is a greeting (such as "hi", "hello", "hii", "hey"), respond warmly as HealthFood AI, introducing yourself and asking how you can assist with their nutrition or healthy eating goals.
+- Do NOT output a food card or 100g nutrient table for greetings or simple conversational messages.
+- For specific questions, provide a clear, natural, and helpful answer.
 - Include a short health disclaimer at the end in ${targetLang}.`;
 
   return {
     prompt,
-    systemPrompt: SYSTEM_PROMPT,
+    systemPrompt: CHAT_QUESTION_SYSTEM_PROMPT,
   };
 }
