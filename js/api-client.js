@@ -7,7 +7,7 @@ class APIClient {
     // Default to localhost:8787 if running locally or file protocol
     const isLocal = typeof window !== 'undefined' && 
       (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:');
-    this.baseUrl = baseUrl || (isLocal && window.location.port !== '8787' ? 'http://localhost:8787' : '');
+    this.baseUrl = baseUrl || (isLocal && window.location.port !== '8787' ? 'http://localhost:8787' : 'https://healthfood-ai-api.manisadhu20.workers.dev');
     this.mockFoods = [
       {
         id: 1,
