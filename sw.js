@@ -1,24 +1,24 @@
-const CACHE_NAME = 'healthfood-ai-v1.1';
+const CACHE_NAME = 'healthfood-ai-v1.2';
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.webmanifest',
-  '/css/themes.css',
-  '/css/main.css',
-  '/css/responsive.css',
-  '/js/api-client.js',
-  '/js/theme-manager.js',
-  '/js/language-manager.js',
-  '/js/notification-manager.js',
-  '/js/legal.js',
-  '/js/food.js',
-  '/js/chatbot.js',
-  '/js/app.js',
-  '/i18n/en.json',
-  '/i18n/te.json',
-  '/i18n/hi.json',
-  '/assets/icons/icon-192.svg',
-  '/assets/icons/icon-512.svg'
+  './',
+  './index.html',
+  './manifest.webmanifest',
+  './css/themes.css',
+  './css/main.css',
+  './css/responsive.css',
+  './js/api-client.js',
+  './js/theme-manager.js',
+  './js/language-manager.js',
+  './js/notification-manager.js',
+  './js/legal.js',
+  './js/food.js',
+  './js/chatbot.js',
+  './js/app.js',
+  './i18n/en.json',
+  './i18n/te.json',
+  './i18n/hi.json',
+  './assets/icons/icon-192.svg',
+  './assets/icons/icon-512.svg'
 ];
 
 // Install Event — Cache Application Shell
@@ -26,7 +26,11 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('[ServiceWorker] Pre-caching Application Shell');
-      return cache.addAll(STATIC_ASSETS);
+      return Promise.allSettled(
+        STATIC_ASSETS.map((asset) =>
+          cache.add(asset).catch((err) => console.warn(`[ServiceWorker] Failed to cache ${asset}:`, err))
+        )
+      );
     }).then(() => self.skipWaiting())
   );
 });
