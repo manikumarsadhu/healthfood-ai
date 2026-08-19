@@ -1,7 +1,10 @@
 # HealthFood AI 🥗🤖
 
-> **Multilingual Nutrition & Food-Health Education Web App & PWA**  
-> A fast, mobile-first Progressive Web Application (PWA) built on a serverless edge architecture, offering verified nutrition facts, shared AI knowledge caching, multi-language support (English, Telugu, Hindi), and privacy-first local storage.
+> **Developed by [Mani Kumar Sadhu](https://github.com/manikumarsadhu)**  
+> **Live Web Application**: [https://manikumarsadhu.github.io/healthfood-ai/](https://manikumarsadhu.github.io/healthfood-ai/)  
+> **Live Backend API**: [https://healthfood-ai-api.manisadhu20.workers.dev](https://healthfood-ai-api.manisadhu20.workers.dev)  
+>
+> A fast, mobile-first Progressive Web Application (PWA) offering verified nutrition facts, shared AI knowledge caching, multi-language support (English, Telugu, Hindi), and privacy-first local storage.
 
 ---
 
