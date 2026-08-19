@@ -3,4 +3,4 @@ User-agent: *
 Allow: /
 
 # Sitemap Location
-Sitemap: https://manikumarsadhu.github.io/healthfood-ai/sitemap.xml
+Sitemap: https://healthfood-ai.pages.dev/sitemap.xml

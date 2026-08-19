@@ -1,0 +1,5 @@
+worker/
+.git/
+.agents/
+.vscode/
+*.log
