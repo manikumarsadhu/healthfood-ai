@@ -10,6 +10,9 @@ export interface ProviderEnvSecrets {
   GEMINI_API_KEY?: string;
   GROQ_API_KEY?: string;
   OPENROUTER_API_KEY?: string;
+  OMNIROUTE_API_KEY?: string;
+  OMNIROUTE_URL?: string;
+  OMNIROUTE_MODEL?: string;
 }
 
 // Helper to check if HTTP status or response indicates rate limit / quota exhaustion
@@ -26,6 +29,146 @@ function isRateLimitOrQuotaError(status: number, bodyText: string): boolean {
     lower.includes("out of credits") ||
     lower.includes("overloaded")
   );
+}
+
+// 0. OmniRoute Gateway Provider (Primary OpenAI-compatible AI Gateway)
+export class OmniRouteProvider implements AIProvider {
+  name = "OmniRoute";
+  private apiKey: string;
+  private baseUrl: string;
+  private model: string;
+
+  constructor(apiKey?: string, baseUrl?: string, model?: string) {
+    this.apiKey = apiKey || "";
+    this.baseUrl = baseUrl ? baseUrl.replace(/\/+$/, "") : "http://localhost:20128/v1";
+    this.model = model || "";
+  }
+
+  isConfigured(): boolean {
+    return Boolean(this.apiKey && this.apiKey.trim().length > 0);
+  }
+
+  async generateText(prompt: string, systemPrompt?: string): Promise<AIResponse> {
+    if (!this.isConfigured()) {
+      throw new ProviderUnavailableException(this.name, "API key not configured");
+    }
+
+    const url = `${this.baseUrl}/chat/completions`;
+    const messages = [];
+    if (systemPrompt) {
+      messages.push({ role: "system", content: systemPrompt });
+    }
+    messages.push({ role: "user", content: prompt });
+
+    // Automatic candidate model priority: configured model -> auto/best-free -> Mistral -> Groq -> OpenRouter Free models -> Gemini
+    const candidateModels = Array.from(new Set([
+      ...(this.model ? [this.model] : []),
+      "auto/best-free",
+      "mistral/mistral-small-latest",
+      "mistral/mistral-large-latest",
+      "mistral/mistral-medium-3-5",
+      "mistral/codestral-latest",
+      "mistral/devstral-latest",
+      "groq/openai/gpt-oss-120b",
+      "groq/openai/gpt-oss-20b",
+      "groq/qwen/qwen3.6-27b",
+      "groq/openai/gpt-oss-safeguard-20b",
+      "openrouter/dots-studio/dots-3-note-preview:free",
+      "openrouter/liquid/lfm-2.5-2.6b:free",
+      "openrouter/nvidia/nemotron-3.5-lightning:free",
+      "openrouter/poolside/laguna-s-2.1:free",
+      "openrouter/poolside/laguna-xs-2.1:free",
+      "openrouter/cohere/north-mini-code:free",
+      "openrouter/z-ai/glm-5.2:free",
+      "openrouter/nvidia/nemotron-3.5-content-safety:free",
+      "openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+      "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+      "openrouter/google/gemma-4-31b-it:free",
+      "openrouter/openai/gpt-oss-20b:free",
+      "openrouter/nvidia/nemotron-nano-9b-v2:free",
+      "openrouter/nvidia/nemotron-nano-12b-v2-vl:free",
+      "openrouter/nvidia/nemotron-3-nano-30b-a3b:free",
+      "openrouter/nvidia/nemotron-3-super-120b-a12b:free",
+      "gemini/gemini-3.5-flash-lite",
+      "auto",
+      "openrouter/free"
+    ]));
+
+    let lastError: Error | null = null;
+
+    for (const targetModel of candidateModels) {
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${this.apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: targetModel,
+            messages,
+            temperature: 0.3,
+            max_tokens: 1000,
+          }),
+        });
+
+        const resText = await response.text();
+
+        if (!response.ok || isRateLimitOrQuotaError(response.status, resText)) {
+          if (isRateLimitOrQuotaError(response.status, resText)) {
+            lastError = new RateLimitException(this.name, `[OmniRoute] HTTP ${response.status} (${targetModel}): ${resText.slice(0, 150)}`, response.status);
+          } else {
+            lastError = new Error(`[OmniRoute] HTTP ${response.status} (${targetModel}): ${resText.slice(0, 150)}`);
+          }
+          continue; // Try next candidate model in OmniRoute
+        }
+
+        let extractedText = "";
+        let returnedModel = targetModel;
+
+        if (resText.trim().startsWith("data:")) {
+          const lines = resText.split("\n");
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith("data:") && !trimmed.includes("[DONE]")) {
+              try {
+                const chunkJson = JSON.parse(trimmed.slice(5).trim());
+                if (chunkJson.model) returnedModel = chunkJson.model;
+                const contentChunk = chunkJson.choices?.[0]?.delta?.content || chunkJson.choices?.[0]?.message?.content || "";
+                extractedText += contentChunk;
+              } catch (_) {}
+            }
+          }
+        } else {
+          try {
+            const data = JSON.parse(resText);
+            returnedModel = data?.model || targetModel;
+            extractedText = data?.choices?.[0]?.message?.content || "";
+          } catch (e) {
+            lastError = new Error(`[OmniRoute] Invalid JSON response (${targetModel}): ${resText.slice(0, 150)}`);
+            continue;
+          }
+        }
+
+        if (!extractedText || extractedText.trim().length === 0) {
+          lastError = new Error(`[OmniRoute] Empty choices (${targetModel})`);
+          continue;
+        }
+
+        return {
+          content: extractedText,
+          modelProvider: this.name,
+          modelName: returnedModel,
+          generatedAt: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        if (err instanceof RateLimitException) lastError = err;
+        else lastError = err;
+      }
+    }
+
+    throw lastError || new Error("[OmniRoute] All candidate models failed");
+  }
 }
 
 // 1. Google Gemini Provider
@@ -214,8 +357,22 @@ export class OpenRouterProvider implements AIProvider {
   private apiKey: string;
   private candidateModels = [
     "openrouter/free",
-    "nvidia/nemotron-3.5-lightning:free",
     "dots-studio/dots-3-note-preview:free",
+    "liquid/lfm-2.5-2.6b:free",
+    "nvidia/nemotron-3.5-lightning:free",
+    "poolside/laguna-s-2.1:free",
+    "poolside/laguna-xs-2.1:free",
+    "cohere/north-mini-code:free",
+    "z-ai/glm-5.2:free",
+    "nvidia/nemotron-3.5-content-safety:free",
+    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+    "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "google/gemma-4-31b-it:free",
+    "openai/gpt-oss-20b:free",
+    "nvidia/nemotron-nano-9b-v2:free",
+    "nvidia/nemotron-nano-12b-v2-vl:free",
+    "nvidia/nemotron-3-nano-30b-a3b:free",
+    "nvidia/nemotron-3-super-120b-a12b:free",
     "meta-llama/llama-3.3-70b-instruct:free",
     "meta-llama/llama-3.1-8b-instruct:free"
   ];
@@ -380,12 +537,17 @@ export class AIProviderManager {
     if (customProviders && customProviders.length > 0) {
       this.providers = customProviders;
     } else {
-      this.providers = [
+      this.providers = [];
+      const omniroute = new OmniRouteProvider(secrets.OMNIROUTE_API_KEY, secrets.OMNIROUTE_URL, secrets.OMNIROUTE_MODEL);
+      if (omniroute.isConfigured()) {
+        this.providers.push(omniroute);
+      }
+      this.providers.push(
         new CerebrasProvider(secrets.CEREBRAS_API_KEY),
         new GeminiProvider(secrets.GEMINI_API_KEY),
         new GroqProvider(secrets.GROQ_API_KEY),
-        new OpenRouterProvider(secrets.OPENROUTER_API_KEY),
-      ];
+        new OpenRouterProvider(secrets.OPENROUTER_API_KEY)
+      );
     }
   }
 

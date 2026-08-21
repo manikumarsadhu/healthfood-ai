@@ -1,9 +1,13 @@
 import { AIProviderManager } from "./ai/provider-manager";
 import { buildFoodExplanationPrompt, buildQuestionPrompt } from "./ai/prompts";
 import { validateAndNormalizeAIResponse } from "./ai/safety";
+import { handleIngredientCheck } from "./ai/ingredient-check";
+import { handleVisionAnalysis } from "./ai/vision";
+import { handleCravingSwap } from "./ai/craving-swap";
 import { getCachedAIContent, saveAIContent, getCachedQuestionAnswer, saveQuestionAnswer } from "./db/cache";
 import { acquireGenerationLock, releaseGenerationLock } from "./db/locks";
 import { ContentType, FoodFactContext } from "./ai/types";
+
 
 export interface Env {
   healthfood_db: D1Database;
@@ -11,7 +15,15 @@ export interface Env {
   GEMINI_API_KEY?: string;
   GROQ_API_KEY?: string;
   OPENROUTER_API_KEY?: string;
+  OMNIROUTE_API_KEY?: string;
+  OMNIROUTE_URL?: string;
+  OMNIROUTE_MODEL?: string;
+  AI_PRIMARY_PROVIDER?: string;
+  AI_PRIMARY_MODEL?: string;
+  AI_FALLBACK_PROVIDER?: string;
+  AI_FALLBACK_MODEL?: string;
 }
+
 
 type FoodRow = {
   id: number;
@@ -132,6 +144,47 @@ export default {
         }
         return handleAIQuestion(request, env);
       }
+
+      // Packaged Ingredient Red-Flag Scanner: /api/ai/ingredient-check
+      if (path === "/api/ai/ingredient-check" && request.method === "POST") {
+        const clientIp = request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for") || "127.0.0.1";
+        if (isRateLimited(clientIp)) {
+          return json(
+            { success: false, error: "Rate limit exceeded. Maximum 10 AI requests per minute allowed." },
+            429,
+            { "Retry-After": "60" }
+          );
+        }
+        return handleIngredientCheck(request, env);
+      }
+
+      // Vision Food Photo Analyzer: /api/ai/vision
+      if (path === "/api/ai/vision" && request.method === "POST") {
+        const clientIp = request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for") || "127.0.0.1";
+        if (isRateLimited(clientIp)) {
+          return json(
+            { success: false, error: "Rate limit exceeded. Maximum 10 AI requests per minute allowed." },
+            429,
+            { "Retry-After": "60" }
+          );
+        }
+        return handleVisionAnalysis(request, env);
+      }
+
+      // Healthy Craving Swap Generator: /api/ai/craving-swap
+      if (path === "/api/ai/craving-swap" && request.method === "POST") {
+        const clientIp = request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for") || "127.0.0.1";
+        if (isRateLimited(clientIp)) {
+          return json(
+            { success: false, error: "Rate limit exceeded. Maximum 10 AI requests per minute allowed." },
+            429,
+            { "Retry-After": "60" }
+          );
+        }
+        return handleCravingSwap(request, env);
+      }
+
+
 
       return json(
         {
@@ -954,13 +1007,8 @@ async function getOrGenerateFoodAI(
       languageCode
     );
 
-    // 4. Execute AI provider manager with multi-provider rate limit fallback loop
-    const manager = new AIProviderManager({
-      CEREBRAS_API_KEY: env.CEREBRAS_API_KEY,
-      GEMINI_API_KEY: env.GEMINI_API_KEY,
-      GROQ_API_KEY: env.GROQ_API_KEY,
-      OPENROUTER_API_KEY: env.OPENROUTER_API_KEY,
-    });
+    // 4. Execute AI provider manager with multi-provider rate limit fallback loop (OmniRoute #1)
+    const manager = new AIProviderManager(env);
 
     const aiRawResponse = await manager.generateText(prompt, systemPrompt);
 
@@ -1067,12 +1115,7 @@ async function handleAIQuestion(request: Request, env: Env): Promise<Response> {
 
   const { prompt, systemPrompt } = buildQuestionPrompt(question.trim(), languageCode, facts);
 
-  const manager = new AIProviderManager({
-    CEREBRAS_API_KEY: env.CEREBRAS_API_KEY,
-    GEMINI_API_KEY: env.GEMINI_API_KEY,
-    GROQ_API_KEY: env.GROQ_API_KEY,
-    OPENROUTER_API_KEY: env.OPENROUTER_API_KEY,
-  });
+  const manager = new AIProviderManager(env);
 
   try {
     const aiRawResponse = await manager.generateText(prompt, systemPrompt);

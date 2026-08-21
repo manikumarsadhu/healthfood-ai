@@ -98,6 +98,16 @@
 
 <body>
 
+  <!-- Top Accent Progress Indicator -->
+  <div id="top-progress-bar" class="top-progress-line"></div>
+
+  <!-- App Initial Splash Overlay -->
+  <div id="app-splash" class="app-splash-overlay" aria-hidden="true">
+    <div class="app-splash-logo">🥗</div>
+    <div class="app-splash-title">HealthFood AI</div>
+    <div class="app-splash-subtitle">Loading verified nutrition engine...</div>
+  </div>
+
   <!-- Glassmorphism Header -->
   <header class="app-header">
     <div class="header-container">
@@ -120,6 +130,12 @@
         <!-- Notification Toggle Button -->
         <button id="notification-toggle-btn" class="icon-btn" title="Toggle Daily Tip Notifications">🔕</button>
 
+        <!-- Scan Ingredients Trigger -->
+        <button id="open-ingredient-btn" class="secondary-btn" style="padding: 0.5rem 0.85rem; font-size: 0.85rem;" onclick="window.ingredientScannerController?.openModal()">
+          <span>🏷️</span>
+          <span>Scan Ingredients</span>
+        </button>
+
         <!-- AI Chat Floating Trigger -->
         <button id="open-chat-btn" class="primary-btn">
           <span>✨</span>
@@ -128,6 +144,7 @@
       </div>
     </div>
   </header>
+
 
   <!-- Main Content Wrapper -->
   <main class="main-wrapper">
@@ -146,17 +163,64 @@
       </div>
     </section>
 
-    <!-- Controls: Search & Category Chips -->
+    <!-- Quick Craving Swaps Bar -->
+    <section style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.85rem 1.25rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-size: 1.2rem;">🍿</span>
+        <div>
+          <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-primary);">Craving Junk Food?</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">Get 70% lower-calorie healthy swaps</div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.4rem; overflow-x: auto; scrollbar-width: none;">
+        <button class="health-chip" onclick="window.appController?.openCravingSwap('Potato Chips')">🥔 Chips</button>
+        <button class="health-chip" onclick="window.appController?.openCravingSwap('Fried Chicken')">🍗 Fried Chicken</button>
+        <button class="health-chip" onclick="window.appController?.openCravingSwap('Boba Tea')">🧋 Boba Tea</button>
+        <button class="health-chip" onclick="window.appController?.openCravingSwap('Chocolate Cake')">🍰 Chocolate</button>
+      </div>
+    </section>
+
+    <!-- Controls: Search & Category Chips & Health Goals -->
     <section class="controls-section">
-      <div class="search-box-container">
+      <div class="search-box-container" style="display: flex; align-items: center; gap: 0.5rem;">
         <span class="search-icon">🔍</span>
         <input type="text" id="search-input" class="search-input" data-i18n="search_placeholder"
-          placeholder="Search foods, nutrients, calories, or health benefits..." />
+          placeholder="Search foods, nutrients, calories, or health benefits..." style="flex: 1;" />
+        
+        <!-- Vision AI Camera Trigger -->
+        <input type="file" id="vision-file-input" accept="image/*" capture="environment" style="display: none;" onchange="window.appController?.handleVisionImageSelect(event)" />
+        <button class="primary-btn" style="padding: 0.55rem 0.9rem; font-size: 0.85rem; border-radius: 10px; white-space: nowrap;" title="Snap Meal Photo for AI Analysis" onclick="document.getElementById('vision-file-input').click()">
+          <span>📷</span>
+          <span style="display: none;" class="desktop-only-inline">Snap Meal</span>
+        </button>
       </div>
+
 
       <!-- Category Filter Chips -->
       <div id="category-chips-wrapper" class="category-chips-wrapper">
         <!-- Dynamically rendered categories -->
+      </div>
+
+      <!-- Health Goal Filters -->
+      <div class="health-goal-wrapper">
+        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-right: 0.5rem; display: flex; align-items: center; gap: 0.25rem;">
+          <span class="material-symbols-outlined" style="font-size: 1rem;">tune</span> Health Filter:
+        </span>
+        <button class="health-chip active" data-goal="general" onclick="window.appController?.setHealthGoal('general')">
+          🌐 General
+        </button>
+        <button class="health-chip" data-goal="diabetic" onclick="window.appController?.setHealthGoal('diabetic')">
+          🌱 Diabetic Friendly
+        </button>
+        <button class="health-chip" data-goal="weight_loss" onclick="window.appController?.setHealthGoal('weight_loss')">
+          🔥 Weight Loss
+        </button>
+        <button class="health-chip" data-goal="high_bp" onclick="window.appController?.setHealthGoal('high_bp')">
+          🫀 High BP / Low Sodium
+        </button>
+        <button class="health-chip" data-goal="pcos" onclick="window.appController?.setHealthGoal('pcos')">
+          🌸 PCOS Support
+        </button>
       </div>
     </section>
 
@@ -204,8 +268,120 @@
 
   </main>
 
+  <!-- Sticky Bottom "My Meal Plate" Bar -->
+  <div id="plate-bar" class="plate-bar">
+    <div class="plate-bar-container">
+      <div class="plate-bar-info" onclick="window.foodRenderer?.openPlateModal()">
+        <div class="plate-icon-badge">
+          🍽️ <span id="plate-count-badge" class="plate-count-badge">0</span>
+        </div>
+        <div>
+          <div class="plate-bar-title">My Meal Plate</div>
+          <div id="plate-summary-text" class="plate-bar-summary">0 kcal • 0g Pro • 0g Carb • 0g Fat</div>
+        </div>
+      </div>
+      <div class="plate-bar-actions">
+        <button class="secondary-btn" style="padding: 0.45rem 0.8rem; font-size: 0.85rem;" onclick="window.plateManager?.clearPlate()">Clear</button>
+        <button class="primary-btn" style="padding: 0.45rem 1rem; font-size: 0.88rem;" onclick="window.foodRenderer?.openPlateModal()">View Plate</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal Backdrop -->
   <div id="modal-backdrop" class="modal-backdrop"></div>
+
+  <!-- Meal Plate Drawer Modal -->
+  <aside id="plate-drawer" class="plate-drawer">
+    <div class="drawer-header">
+      <div>
+        <h2 class="drawer-title">🍽️ My Meal Plate</h2>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">Real-time meal calorie & nutrient breakdown</div>
+      </div>
+      <button id="close-plate-btn" class="icon-btn" onclick="window.foodRenderer?.closePlateModal()">✕</button>
+    </div>
+
+    <div class="drawer-body">
+      <div id="plate-totals-card" class="plate-totals-card">
+        <!-- Dynamically rendered meal plate totals -->
+      </div>
+
+      <div class="section-label" style="margin: 1.25rem 0 0.75rem 0;">Selected Items & Portion Scaling</div>
+      <div id="plate-items-list" class="plate-items-list">
+        <!-- Dynamically rendered plate items -->
+      </div>
+    </div>
+  </aside>
+
+  <!-- Packaged Ingredient Scanner Drawer Modal -->
+  <aside id="ingredient-modal" class="plate-drawer">
+    <div class="drawer-header">
+      <div>
+        <h2 class="drawer-title">🏷️ Ingredient Red-Flag Scanner</h2>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">Scan packaged foods for hidden sugars, palm oil & red flags</div>
+      </div>
+      <button class="icon-btn" onclick="window.ingredientScannerController?.closeModal()">✕</button>
+    </div>
+
+    <div class="drawer-body">
+      <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+        <label style="font-weight: 600; font-size: 0.88rem; display: block; margin-bottom: 0.4rem; color: var(--text-primary);">
+          Paste Ingredient List:
+        </label>
+        <textarea id="ingredient-text-input" class="search-input" style="width: 100%; height: 80px; font-size: 0.85rem; resize: vertical;" placeholder="e.g. Refined Wheat Flour, Palm Oil, Added Sugar, E319, Maltodextrin..."></textarea>
+
+        <div style="margin-top: 1rem; text-align: center; color: var(--text-muted); font-size: 0.8rem; font-weight: 600;">— OR SNAP / UPLOAD PACKAGE LABEL PHOTO —</div>
+
+        <div style="margin-top: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+          <input type="file" id="ingredient-file-input" accept="image/*" capture="environment" style="display: none;" onchange="window.ingredientScannerController?.handleImageSelect(event)" />
+          <button class="secondary-btn" style="flex: 1; padding: 0.6rem;" onclick="document.getElementById('ingredient-file-input').click()">
+            📷 Take / Upload Photo
+          </button>
+          <button class="icon-btn" style="color: var(--macro-fat);" onclick="window.ingredientScannerController?.clearImage()" title="Clear Image">✕</button>
+        </div>
+
+        <img id="ingredient-preview-img" style="display: none; max-width: 100%; height: 140px; object-fit: contain; margin-top: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color);" alt="Ingredient preview" />
+
+        <button class="primary-btn" style="width: 100%; margin-top: 1rem; padding: 0.75rem;" onclick="window.ingredientScannerController?.runAnalysis()">
+          <span>🔍</span>
+          <span>Analyze Packaged Ingredients</span>
+        </button>
+      </div>
+
+  <!-- Vision AI Food Detector Drawer Modal -->
+  <aside id="vision-modal" class="plate-drawer">
+    <div class="drawer-header">
+      <div>
+        <h2 class="drawer-title">📷 Visual Food Photo Analyzer</h2>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">AI identifies foods $\rightarrow$ Verified D1 database computes nutrition</div>
+      </div>
+      <button class="icon-btn" onclick="window.appController?.closeVisionModal()">✕</button>
+    </div>
+
+    <div class="drawer-body">
+      <div id="vision-results">
+        <!-- Results rendered dynamically -->
+      </div>
+    </div>
+  </aside>
+
+  <!-- Craving Swap Drawer Modal -->
+  <aside id="craving-modal" class="plate-drawer">
+    <div class="drawer-header">
+      <div>
+        <h2 class="drawer-title">🍿 Healthy Craving Swaps</h2>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">Nutritious alternatives with up to 70% fewer calories</div>
+      </div>
+      <button class="icon-btn" onclick="window.appController?.closeCravingModal()">✕</button>
+    </div>
+
+    <div class="drawer-body">
+      <div id="craving-results">
+        <!-- Craving results rendered dynamically -->
+      </div>
+    </div>
+  </aside>
+
+
 
   <!-- Food Detail Drawer -->
   <aside id="detail-drawer" class="detail-drawer">
@@ -219,6 +395,27 @@
 
     <div class="drawer-body">
       <p id="drawer-desc" style="color: var(--text-secondary); margin-bottom: 1.25rem; font-size: 0.95rem;"></p>
+
+      <!-- Health Goal Badge -->
+      <div id="drawer-health-badge" style="margin-bottom: 1rem;"></div>
+
+      <!-- Add to Plate Action Bar -->
+      <div id="drawer-add-plate-container" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
+        <div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">PORTION SIZE</div>
+          <select id="drawer-portion-select" class="select-control" style="margin-top: 0.25rem; width: 140px;" onchange="window.foodRenderer?.handleDetailPortionChange(this.value)">
+            <option value="100">100g (Standard)</option>
+            <option value="50">½ Serving (50g)</option>
+            <option value="150">1 Katori (150g)</option>
+            <option value="200">1 Cup (200g)</option>
+            <option value="250">1 Glass (250ml)</option>
+          </select>
+        </div>
+        <button id="drawer-add-plate-btn" class="primary-btn" onclick="window.foodRenderer?.addCurrentToPlate()">
+          <span>🍽️</span>
+          <span>Add to My Plate</span>
+        </button>
+      </div>
 
       <!-- 1. Nutrition Summary Header -->
       <div id="drawer-summary" class="nutrition-summary-card" style="margin-bottom: 1.5rem;"></div>
@@ -309,12 +506,15 @@
   </aside>
 
   <!-- Footer Attribution -->
-  <footer style="text-align: center; padding: 1.5rem; color: var(--text-muted); font-size: 0.85rem; border-top: 1px solid var(--border-color); margin-top: 2rem;">
+  <footer style="text-align: center; padding: 1.5rem; color: var(--text-muted); font-size: 0.85rem; border-top: 1px solid var(--border-color); margin-top: 2rem; margin-bottom: 70px;">
     <p>© 2026 <strong>HealthFood AI</strong> — Developed by <strong><a href="https://github.com/manikumarsadhu" target="_blank" rel="noopener" style="color: var(--primary-color); text-decoration: none;">Mani Kumar Sadhu</a></strong>. Evidence-Based Nutrition & AI Assistant.</p>
   </footer>
 
   <!-- JavaScript Modules -->
   <script src="js/api-client.js"></script>
+  <script src="js/plate-manager.js"></script>
+  <script src="js/health-goals.js"></script>
+  <script src="js/ingredient-scanner.js"></script>
   <script src="js/theme-manager.js"></script>
   <script src="js/language-manager.js"></script>
   <script src="js/notification-manager.js"></script>
@@ -323,13 +523,21 @@
   <script src="js/chatbot.js"></script>
   <script src="js/app.js"></script>
 
+
   <!-- PWA Service Worker Registration -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('[ServiceWorker] Registered:', reg.scope))
+          .then(reg => {
+            console.log('[ServiceWorker] Registered:', reg.scope);
+            reg.update();
+          })
           .catch(err => console.warn('[ServiceWorker] Registration failed:', err));
+
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          console.log('[ServiceWorker] New ServiceWorker active.');
+        });
       });
     }
   </script>

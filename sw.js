@@ -1,4 +1,4 @@
-const CACHE_NAME = 'healthfood-ai-v1.2';
+const CACHE_NAME = 'healthfood-ai-v1.6';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -23,6 +23,7 @@ const STATIC_ASSETS = [
 
 // Install Event — Cache Application Shell
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('[ServiceWorker] Pre-caching Application Shell');
@@ -31,7 +32,7 @@ self.addEventListener('install', (event) => {
           cache.add(asset).catch((err) => console.warn(`[ServiceWorker] Failed to cache ${asset}:`, err))
         )
       );
-    }).then(() => self.skipWaiting())
+    })
   );
 });
 
@@ -60,12 +61,28 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle API Requests (Network First, then cache)
+  // Handle API Requests (Network First for GET, direct fetch for POST/etc.)
   if (url.pathname.startsWith('/api/')) {
+    if (event.request.method !== 'GET') {
+      event.respondWith(
+        fetch(event.request).catch(() => {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              offline: true,
+              message: 'You are currently offline. POST operations are not available offline.'
+            }),
+            { headers: { 'Content-Type': 'application/json' } }
+          );
+        })
+      );
+      return;
+    }
+
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          if (response.ok) {
+          if (response.ok && event.request.method === 'GET') {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           }

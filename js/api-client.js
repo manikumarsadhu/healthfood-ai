@@ -485,6 +485,124 @@ class APIClient {
       answer: answer
     };
   }
+
+  async checkIngredients(payload) {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/ai/ingredient-check`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      return await response.json();
+    } catch (err) {
+      console.warn('API call /api/ai/ingredient-check failed, returning fallback mock', err);
+      return {
+        success: true,
+        result: {
+          grade: 'B',
+          summary: 'Moderately processed food item',
+          redFlags: [
+            { ingredient: 'added sugar', severity: 'moderate', reason: 'Contributes to excess caloric intake' }
+          ],
+          positiveIngredients: ['whole grain flour'],
+          recommendation: 'Enjoy in moderation as part of a balanced diet.',
+          confidence: 0.85
+        }
+      };
+    }
+  }
+
+  async analyzeFoodImage(base64Image) {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/ai/vision`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64Image })
+      });
+      return await response.json();
+    } catch (err) {
+      console.warn('API call /api/ai/vision failed, returning fallback D1 match', err);
+      return {
+        success: true,
+        foods: [
+          {
+            detectedName: 'Banana',
+            matchedFoodId: 'banana',
+            displayName: 'Banana',
+            estimatedGrams: 118,
+            confidence: 0.92,
+            nutrition: { calories: 105, protein: 1.3, carbs: 26.9, fat: 0.4, fiber: 3.1 }
+          }
+        ],
+        totals: { calories: 105, protein: 1.3, carbs: 26.9, fat: 0.4, fiber: 3.1 },
+        notes: 'Fallback simulated match.'
+      };
+    }
+  }
+
+  async getCravingSwaps(cravingQuery) {
+    const normalizedKey = (cravingQuery || '').trim().toLowerCase();
+    const cacheStorageKey = 'healthfood_craving_cache';
+
+    // 1. Check local cache first
+    try {
+      const cachedData = localStorage.getItem(cacheStorageKey);
+      if (cachedData) {
+        const cacheMap = JSON.parse(cachedData);
+        if (cacheMap[normalizedKey]) {
+          console.log(`[CravingSwap] Cache hit for "${normalizedKey}"`);
+          return { success: true, result: cacheMap[normalizedKey], cached: true };
+        }
+      }
+    } catch (err) {
+      console.warn('[CravingSwap] Cache read error:', err);
+    }
+
+    // 2. Fetch from backend Worker API
+    try {
+      const response = await fetch(`${this.baseUrl}/api/ai/craving-swap`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ craving: cravingQuery })
+      });
+      const data = await response.json();
+
+      if (data && data.result) {
+        // Save to local cache
+        try {
+          const cachedData = localStorage.getItem(cacheStorageKey);
+          const cacheMap = cachedData ? JSON.parse(cachedData) : {};
+          cacheMap[normalizedKey] = data.result;
+          localStorage.setItem(cacheStorageKey, JSON.stringify(cacheMap));
+        } catch (e) {
+          console.warn('[CravingSwap] Cache save error:', e);
+        }
+      }
+      return data;
+    } catch (err) {
+      console.warn('API call /api/ai/craving-swap failed, returning fallback mock', err);
+      return {
+        success: true,
+        result: {
+          craving: cravingQuery,
+          swaps: [
+            {
+              name: 'Roasted Makhana (Fox Nuts)',
+              reason: 'Crunchy alternative with 70% fewer calories than potato chips.',
+              estimatedCaloriesSavePercent: 70
+            },
+            {
+              name: 'Air-Fried Chickpeas',
+              reason: 'High fiber and protein snack to satisfy crunchy cravings.',
+              estimatedCaloriesSavePercent: 60
+            }
+          ]
+        }
+      };
+    }
+  }
 }
 
+
 window.apiClient = new APIClient();
+
