@@ -20,7 +20,7 @@ class ThemeManager {
 
     const toggleBtn = document.getElementById('theme-toggle-btn');
     if (toggleBtn) {
-      toggleBtn.innerHTML = theme === 'dark' ? '☀️' : '🌙';
+      toggleBtn.innerHTML = theme === 'dark' ? '<span class="material-symbols-outlined">light_mode</span>' : '<span class="material-symbols-outlined">dark_mode</span>';
       toggleBtn.setAttribute('title', theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode');
     }
   }

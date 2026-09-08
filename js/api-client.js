@@ -347,23 +347,69 @@ class APIClient {
       const res = await fetch(`${this.baseUrl}/api/daily-tip?lang=${lang}`);
       if (res.ok) {
         const json = await res.json();
-        if (json.success && json.data) return json.data;
+        if (json.success && (json.data || json.tip)) {
+          const raw = json.data || json.tip;
+          return {
+            title: raw.title || `Daily Food Awareness Spotlight: ${raw.food_name || raw.food?.name || 'Spinach'}`,
+            tip: raw.message || raw.tip || "Spinach is exceptionally rich in lutein and folate, supporting both macular eye health and cellular red blood cell production.",
+            food_slug: raw.food_slug || raw.food?.slug || "spinach",
+            food_name: raw.food_name || raw.food?.name || "Spinach",
+            image_url: raw.image_url || raw.food?.imageUrl || "https://images.unsplash.com/photo-1576045057995-568f588f82fb?auto=format&fit=crop&w=600&q=80"
+          };
+        }
       }
     } catch (e) {
       console.warn("Using fallback daily tip:", e.message);
     }
-    return {
-      tip: "Spinach is exceptionally rich in lutein and folate, supporting both macular eye health and cellular red blood cell production.",
-      food_slug: "spinach"
-    };
+
+    // Dynamic rotation based on day of year for offline resilience
+    const fallbackList = [
+      {
+        title: "Daily Food Awareness Spotlight: Spinach 🥗",
+        tip: "Spinach is exceptionally rich in lutein, zeaxanthin, and folate. Eating 1 cup of spinach daily helps protect retinal eye health and supports cellular red blood cell synthesis.",
+        food_slug: "spinach",
+        food_name: "Spinach",
+        image_url: "https://images.unsplash.com/photo-1576045057995-568f588f82fb?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        title: "Daily Food Awareness Spotlight: Bananas 🍌",
+        tip: "Bananas provide 450mg of potassium per serving, helping balance blood pressure, regulate fluid retention, and support muscle contraction during workouts.",
+        food_slug: "banana",
+        food_name: "Bananas",
+        image_url: "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        title: "Daily Food Awareness Spotlight: Raw Almonds 🥜",
+        tip: "A handful (~30g) of raw almonds delivers 49% of your daily Vitamin E requirement, fighting oxidative stress and promoting arterial elasticity.",
+        food_slug: "almonds",
+        food_name: "Raw Almonds",
+        image_url: "https://images.unsplash.com/photo-1623428187969-5da2dcea5ebf?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        title: "Daily Food Awareness Spotlight: Quinoa 🌾",
+        tip: "Quinoa is a rare plant-based complete protein containing all 9 essential amino acids with a low glycemic index for stable blood sugar management.",
+        food_slug: "quinoa",
+        food_name: "Quinoa",
+        image_url: "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80"
+      }
+    ];
+
+    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+    const selected = fallbackList[dayOfYear % fallbackList.length];
+    return selected;
   }
 
-  async askAI(question, foodSlug = null, lang = 'en', contentType = 'basic') {
+  async askAI(question, foodSlug = null, lang = 'en', contentType = 'basic', signal = null) {
+    if (signal && signal.aborted) {
+      return { cancelled: true };
+    }
+
     try {
       const res = await fetch(`${this.baseUrl}/api/ai/question`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, food_slug: foodSlug, languageCode: lang, lang, content_type: contentType })
+        body: JSON.stringify({ question, food_slug: foodSlug, languageCode: lang, lang, content_type: contentType }),
+        signal: signal
       });
       if (res.ok) {
         const json = await res.json();
@@ -376,7 +422,33 @@ class APIClient {
         }
       }
     } catch (e) {
+      if (e.name === 'AbortError') {
+        return { cancelled: true };
+      }
       console.warn("Using fallback AI answer:", e.message);
+    }
+
+    if (signal && signal.aborted) {
+      return { cancelled: true };
+    }
+
+    // Simulated short delay to allow smooth cancellation testing in offline/fallback mode
+    try {
+      await new Promise((resolve, reject) => {
+        const timer = setTimeout(resolve, 800);
+        if (signal) {
+          signal.addEventListener('abort', () => {
+            clearTimeout(timer);
+            reject(new DOMException('Aborted', 'AbortError'));
+          });
+        }
+      });
+    } catch (err) {
+      if (err.name === 'AbortError') return { cancelled: true };
+    }
+
+    if (signal && signal.aborted) {
+      return { cancelled: true };
     }
 
     return this.generateSimulatedNutritionResponse(question);
@@ -477,7 +549,30 @@ class APIClient {
       }
     }
 
-    const answer = `### ${emoji} ${foodName} nutrition\n\nFor **${serving}**:\n\n| Nutrient | Approx. amount |\n| :--- | ---: |\n| Calories | ${calories} |\n| Carbohydrates | ${carbs} |\n| Natural sugars | ${sugars} |\n| Fiber | ${fiber} |\n| Protein | ${protein} |\n| Fat | ${fat} |\n| Potassium | ${potassium} |\n| Vitamin C | ${vitC} |\n| Vitamin B6 | ${vitB6} |\n| Magnesium | ${mag} |\n\n### Key Health Benefits\n- **Rich in Essential Micronutrients**: Provides vital vitamins and minerals that support cellular immunity and energy metabolism.\n- **Dietary Fiber Support**: Promotes healthy gut motility, microbiota diversity, and steady glucose balance.\n\n*Disclaimer: Information is for educational purposes and is not a substitute for professional medical advice.*`;
+    const answer = `### ${emoji} ${foodName} — Health Benefits
+
+A ${foodName.toLowerCase()} is a nutritious fruit that can be part of a healthy diet.
+
+| Nutrient | Approximate amount in ${serving} |
+| :--- | ---: |
+| Calories | ${calories} |
+| Carbohydrates | ${carbs} |
+| Fiber | ${fiber} |
+| Protein | ${protein} |
+| Potassium | ${potassium} |
+| Vitamin B6 | ${vitB6} |
+
+### Benefits
+- **Energy**: Provides carbohydrates for daily activities and exercise.
+- **Digestion**: Fiber supports healthy bowel movements.
+- **Heart health**: Potassium helps maintain normal blood pressure.
+- **Muscles**: Potassium supports normal muscle function.
+- **Satiety**: Fiber can help you feel full.
+
+### How much can you eat?
+For most healthy adults, **1 medium ${foodName.toLowerCase()} a day is a reasonable choice**. You can eat it as a snack, with oats, or with yogurt.
+
+**Tip:** If your goal is weight control, ${foodName.toLowerCase()} itself is not the problem—your overall calorie intake matters.`;
 
     return {
       success: true,
@@ -565,41 +660,112 @@ class APIClient {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ craving: cravingQuery })
       });
-      const data = await response.json();
+      if (response.ok) {
+        const data = await response.json();
 
-      if (data && data.result) {
-        // Save to local cache
-        try {
-          const cachedData = localStorage.getItem(cacheStorageKey);
-          const cacheMap = cachedData ? JSON.parse(cachedData) : {};
-          cacheMap[normalizedKey] = data.result;
-          localStorage.setItem(cacheStorageKey, JSON.stringify(cacheMap));
-        } catch (e) {
-          console.warn('[CravingSwap] Cache save error:', e);
+        if (data && data.success && data.result) {
+          // Save to local cache
+          try {
+            const cachedData = localStorage.getItem(cacheStorageKey);
+            const cacheMap = cachedData ? JSON.parse(cachedData) : {};
+            cacheMap[normalizedKey] = data.result;
+            localStorage.setItem(cacheStorageKey, JSON.stringify(cacheMap));
+          } catch (e) {
+            console.warn('[CravingSwap] Cache save error:', e);
+          }
+          return data;
         }
       }
-      return data;
     } catch (err) {
       console.warn('API call /api/ai/craving-swap failed, returning fallback mock', err);
-      return {
-        success: true,
-        result: {
-          craving: cravingQuery,
-          swaps: [
-            {
-              name: 'Roasted Makhana (Fox Nuts)',
-              reason: 'Crunchy alternative with 70% fewer calories than potato chips.',
-              estimatedCaloriesSavePercent: 70
-            },
-            {
-              name: 'Air-Fried Chickpeas',
-              reason: 'High fiber and protein snack to satisfy crunchy cravings.',
-              estimatedCaloriesSavePercent: 60
-            }
-          ]
-        }
-      };
     }
+
+    return this.getSimulatedCravingSwaps(cravingQuery);
+  }
+
+  getSimulatedCravingSwaps(cravingQuery) {
+    const q = (cravingQuery || '').toLowerCase();
+    let cravingName = cravingQuery || 'Junk Food';
+    let swaps = [];
+
+    if (q.includes('chicken') || q.includes('fried')) {
+      cravingName = 'Fried Chicken';
+      swaps = [
+        {
+          name: 'Air-Fried Crispy Chicken Tenders',
+          reason: 'Coated in almond flour or oats and air-fried for a crunchy crust with 65% less fat and calories.',
+          estimatedCaloriesSavePercent: 65
+        },
+        {
+          name: 'Baked Buffalo Cauliflower Bites',
+          reason: 'High-fiber plant alternative with rich spicy crunch and 80% fewer calories.',
+          estimatedCaloriesSavePercent: 80
+        }
+      ];
+    } else if (q.includes('chip') || q.includes('potato')) {
+      cravingName = 'Potato Chips';
+      swaps = [
+        {
+          name: 'Roasted Makhana (Fox Nuts)',
+          reason: 'Light, crunchy snack rich in antioxidants with 70% fewer calories than potato chips.',
+          estimatedCaloriesSavePercent: 70
+        },
+        {
+          name: 'Air-Fried Crispy Chickpeas',
+          reason: 'High-fiber and plant protein alternative that satisfies salty crunch cravings.',
+          estimatedCaloriesSavePercent: 60
+        }
+      ];
+    } else if (q.includes('boba') || q.includes('tea') || q.includes('drink')) {
+      cravingName = 'Boba Tea';
+      swaps = [
+        {
+          name: 'Iced Green Tea with Chia Seeds & Honey',
+          reason: 'Provides natural antioxidants and fiber-rich chia seeds instead of sugary tapioca syrup.',
+          estimatedCaloriesSavePercent: 75
+        },
+        {
+          name: 'Unsweetened Matcha Almond Latte',
+          reason: 'Creamy, rich texture with L-theanine and 80% lower calories.',
+          estimatedCaloriesSavePercent: 80
+        }
+      ];
+    } else if (q.includes('chocolate') || q.includes('sweet') || q.includes('cake')) {
+      cravingName = 'Chocolate';
+      swaps = [
+        {
+          name: 'Dark Chocolate (70%+) with Almonds',
+          reason: 'Rich in polyphenols and magnesium with 40% less refined sugar per serving.',
+          estimatedCaloriesSavePercent: 45
+        },
+        {
+          name: 'Cacao Avocado Mousse',
+          reason: 'Creamy decadent texture powered by healthy monounsaturated fats.',
+          estimatedCaloriesSavePercent: 65
+        }
+      ];
+    } else {
+      swaps = [
+        {
+          name: 'Air-Fried Spiced Makhana / Chickpeas',
+          reason: 'High-protein, high-fiber crunchy alternative with 70% fewer calories.',
+          estimatedCaloriesSavePercent: 70
+        },
+        {
+          name: 'Fresh Fruit & Nut Bowl',
+          reason: 'Natural sweetness and essential micronutrients without processed additives.',
+          estimatedCaloriesSavePercent: 55
+        }
+      ];
+    }
+
+    return {
+      success: true,
+      result: {
+        craving: cravingName,
+        swaps: swaps
+      }
+    };
   }
 }
 

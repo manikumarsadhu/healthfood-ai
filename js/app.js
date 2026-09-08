@@ -55,7 +55,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (heroTextEl) {
       const currentLang = window.languageManager?.currentLang || 'en';
       const tipData = await window.apiClient.getDailyTip(currentLang);
+      window.currentDailyTipData = tipData;
       heroTextEl.textContent = tipData.tip || 'Loading health insight...';
+
+      const foodLinkContainer = document.getElementById('daily-food-link-container');
+      const foodDetailBtn = document.getElementById('daily-food-detail-btn');
+      if (foodLinkContainer && foodDetailBtn && tipData.food_slug) {
+        foodLinkContainer.style.display = 'block';
+        foodDetailBtn.onclick = () => window.foodRenderer?.openDetail(tipData.food_slug);
+        foodDetailBtn.innerHTML = `<span style="display: inline-flex; align-items: center; gap: 0.3rem;"><span class="material-symbols-outlined" style="font-size: 0.9rem;">restaurant</span> View ${tipData.food_name || 'Food'} Profile</span>`;
+      }
     }
   };
   await loadDailyTip();
@@ -277,7 +286,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (cravingResultsEl) {
       cravingResultsEl.innerHTML = `
         <div style="text-align: center; padding: 2rem 1rem; color: var(--text-muted);">
-          <div style="font-size: 2rem; margin-bottom: 0.5rem;" class="loading-spinner">🍿</div>
+          <div style="font-size: 2rem; margin-bottom: 0.5rem;" class="loading-spinner"><span class="material-symbols-outlined" style="font-size: 2.2rem; color: var(--primary);">fastfood</span></div>
           <div>Searching lower-calorie healthy swaps for "${cravingName}"...</div>
         </div>
       `;
@@ -298,7 +307,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             ${(res.swaps || []).map((swap) => `
               <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 12px; padding: 1rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
-                  <div style="font-weight: 700; font-size: 1rem; color: var(--primary);">✨ ${swap.name}</div>
+                  <div style="font-weight: 700; font-size: 1rem; color: var(--primary); display: flex; align-items: center; gap: 0.3rem;"><span class="material-symbols-outlined" style="font-size: 1.1rem;">auto_awesome</span> ${swap.name}</div>
                   ${swap.estimatedCaloriesSavePercent ? `<span style="background: var(--primary); color: #ffffff; font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 10px;">-${swap.estimatedCaloriesSavePercent}% Cal</span>` : ''}
                 </div>
                 <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">${swap.reason}</div>
@@ -339,7 +348,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     syncHealthChipUI(window.healthGoalsEngine.getGoal());
   }
 
+  const shareDailyPost = () => {
+    const tipData = window.currentDailyTipData || {
+      title: "Daily Food Awareness Spotlight",
+      tip: "Spinach is exceptionally rich in lutein and folate, supporting both macular eye health and cellular red blood cell production.",
+      food_name: "Spinach",
+      food_slug: "spinach"
+    };
+
+    if (window.shareManager) {
+      window.shareManager.share({
+        title: tipData.title || `Daily Food Awareness: ${tipData.food_name || 'HealthFood AI'}`,
+        text: tipData.tip,
+        foodName: tipData.food_name || '',
+        foodSlug: tipData.food_slug || '',
+        url: window.location.origin + window.location.pathname
+      });
+    }
+  };
+
   window.appController = {
+    shareDailyPost,
     setHealthGoal,
     loadFoodGrid,
     handleVisionImageSelect,
@@ -356,6 +385,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       window.foodRenderer?.closeDetail();
       window.foodRenderer?.closePlateModal();
       window.ingredientScannerController?.closeModal();
+      window.shareManager?.closeShareModal();
       closeVisionModal();
       closeCravingModal();
       window.chatbotController?.closeChat();

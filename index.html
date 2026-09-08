@@ -36,6 +36,7 @@
   <meta name="twitter:image" content="https://healthfood-ai.pages.dev/assets/og-image.jpg" />
 
   <!-- PWA Manifest & Meta Tags -->
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon-192.svg" />
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#10b981" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -90,6 +91,9 @@
   ]
   </script>
 
+  <!-- Google Material Symbols Icons -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/themes.css" />
   <link rel="stylesheet" href="css/main.css" />
@@ -103,7 +107,7 @@
 
   <!-- App Initial Splash Overlay -->
   <div id="app-splash" class="app-splash-overlay" aria-hidden="true">
-    <div class="app-splash-logo">🥗</div>
+    <div class="app-splash-logo"><span class="material-symbols-outlined" style="font-size: 3.5rem; color: var(--primary);">nutrition</span></div>
     <div class="app-splash-title">HealthFood AI</div>
     <div class="app-splash-subtitle">Loading verified nutrition engine...</div>
   </div>
@@ -112,33 +116,33 @@
   <header class="app-header">
     <div class="header-container">
       <a href="#" class="brand-logo">
-        <div class="brand-icon">🥗</div>
+        <div class="brand-icon"><span class="material-symbols-outlined" style="color: var(--primary);">nutrition</span></div>
         <span data-i18n="app_title">HealthFood AI</span>
       </a>
 
       <div class="header-actions">
         <!-- Language Switcher -->
         <select id="language-select" class="select-control" aria-label="Select Language">
-          <option value="en">🌐 English</option>
-          <option value="te">🌐 తెలుగు (Telugu)</option>
-          <option value="hi">🌐 हिंदी (Hindi)</option>
+          <option value="en">English</option>
+          <option value="te">తెలుగు (Telugu)</option>
+          <option value="hi">हिंदी (Hindi)</option>
         </select>
 
         <!-- Theme Toggle Button -->
-        <button id="theme-toggle-btn" class="icon-btn" title="Toggle Theme">☀️</button>
+        <button id="theme-toggle-btn" class="icon-btn" title="Toggle Theme"><span class="material-symbols-outlined">light_mode</span></button>
 
         <!-- Notification Toggle Button -->
-        <button id="notification-toggle-btn" class="icon-btn" title="Toggle Daily Tip Notifications">🔕</button>
+        <button id="notification-toggle-btn" class="icon-btn" title="Toggle Daily Tip Notifications"><span class="material-symbols-outlined">notifications_off</span></button>
 
         <!-- Scan Ingredients Trigger -->
         <button id="open-ingredient-btn" class="secondary-btn" style="padding: 0.5rem 0.85rem; font-size: 0.85rem;" onclick="window.ingredientScannerController?.openModal()">
-          <span>🏷️</span>
+          <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: text-bottom;">search_hands_free</span>
           <span>Scan Ingredients</span>
         </button>
 
         <!-- AI Chat Floating Trigger -->
         <button id="open-chat-btn" class="primary-btn">
-          <span>✨</span>
+          <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: text-bottom;">smart_toy</span>
           <span data-i18n="ask_ai_btn">Ask AI Assistant</span>
         </button>
       </div>
@@ -149,48 +153,56 @@
   <!-- Main Content Wrapper -->
   <main class="main-wrapper">
 
-    <!-- Hero / Daily Tip Banner -->
-    <section class="hero-card">
-      <div class="hero-icon">💡</div>
-      <div class="hero-content">
-        <div class="hero-title">
-          <span data-i18n="daily_tip_title">Daily Health Insight</span>
-          <span
-            style="font-size: 0.75rem; background: var(--primary-light); color: var(--primary); padding: 0.15rem 0.5rem; border-radius: 10px;">Verified
-            Fact</span>
+    <!-- Hero / Daily AI Food Awareness Spotlight Banner -->
+    <section class="hero-card" id="hero-daily-card">
+      <div class="hero-icon"><span class="material-symbols-outlined" style="font-size: 1.8rem; color: var(--primary);">campaign</span></div>
+      <div class="hero-content" style="flex: 1;">
+        <div class="hero-title" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span data-i18n="daily_tip_title">Daily Food Awareness</span>
+            <span style="font-size: 0.75rem; background: var(--primary-light); color: var(--primary); padding: 0.15rem 0.5rem; border-radius: 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.2rem;"><span class="material-symbols-outlined" style="font-size: 0.85rem;">auto_awesome</span> Daily AI Post</span>
+          </div>
+          <button id="daily-share-btn" class="primary-btn" style="padding: 0.35rem 0.8rem; font-size: 0.8rem; border-radius: 8px; white-space: nowrap;" onclick="window.appController?.shareDailyPost()">
+            <span style="display: inline-flex; align-items: center; gap: 0.3rem;"><span class="material-symbols-outlined" style="font-size: 0.95rem;">share</span> Share Post</span>
+          </button>
         </div>
-        <p id="daily-tip-text" class="hero-text">Loading today's evidence-based health tip...</p>
+        <p id="daily-tip-text" class="hero-text" style="margin-top: 0.4rem;">Loading today's evidence-based health awareness post...</p>
+        <div id="daily-food-link-container" style="margin-top: 0.5rem; display: none;">
+          <button id="daily-food-detail-btn" class="secondary-btn" style="padding: 0.3rem 0.6rem; font-size: 0.78rem; border-radius: 6px;">
+            <span style="display: inline-flex; align-items: center; gap: 0.3rem;"><span class="material-symbols-outlined" style="font-size: 0.9rem;">restaurant</span> View Nutrition Profile</span>
+          </button>
+        </div>
       </div>
     </section>
 
     <!-- Quick Craving Swaps Bar -->
     <section style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.85rem 1.25rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
       <div style="display: flex; align-items: center; gap: 0.5rem;">
-        <span style="font-size: 1.2rem;">🍿</span>
+        <span class="material-symbols-outlined" style="color: var(--primary); font-size: 1.4rem;">fastfood</span>
         <div>
           <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-primary);">Craving Junk Food?</div>
           <div style="font-size: 0.75rem; color: var(--text-muted);">Get 70% lower-calorie healthy swaps</div>
         </div>
       </div>
       <div style="display: flex; align-items: center; gap: 0.4rem; overflow-x: auto; scrollbar-width: none;">
-        <button class="health-chip" onclick="window.appController?.openCravingSwap('Potato Chips')">🥔 Chips</button>
-        <button class="health-chip" onclick="window.appController?.openCravingSwap('Fried Chicken')">🍗 Fried Chicken</button>
-        <button class="health-chip" onclick="window.appController?.openCravingSwap('Boba Tea')">🧋 Boba Tea</button>
-        <button class="health-chip" onclick="window.appController?.openCravingSwap('Chocolate Cake')">🍰 Chocolate</button>
+        <button class="health-chip" onclick="window.appController?.openCravingSwap('Potato Chips')"><span class="material-symbols-outlined" style="font-size: 0.9rem; vertical-align: middle;">cookie</span> Chips</button>
+        <button class="health-chip" onclick="window.appController?.openCravingSwap('Fried Chicken')"><span class="material-symbols-outlined" style="font-size: 0.9rem; vertical-align: middle;">kebab_dining</span> Fried Chicken</button>
+        <button class="health-chip" onclick="window.appController?.openCravingSwap('Boba Tea')"><span class="material-symbols-outlined" style="font-size: 0.9rem; vertical-align: middle;">local_cafe</span> Boba Tea</button>
+        <button class="health-chip" onclick="window.appController?.openCravingSwap('Chocolate Cake')"><span class="material-symbols-outlined" style="font-size: 0.9rem; vertical-align: middle;">cake</span> Chocolate</button>
       </div>
     </section>
 
     <!-- Controls: Search & Category Chips & Health Goals -->
     <section class="controls-section">
       <div class="search-box-container" style="display: flex; align-items: center; gap: 0.5rem;">
-        <span class="search-icon">🔍</span>
+        <span class="search-icon"><span class="material-symbols-outlined">search</span></span>
         <input type="text" id="search-input" class="search-input" data-i18n="search_placeholder"
           placeholder="Search foods, nutrients, calories, or health benefits..." style="flex: 1;" />
         
         <!-- Vision AI Camera Trigger -->
         <input type="file" id="vision-file-input" accept="image/*" capture="environment" style="display: none;" onchange="window.appController?.handleVisionImageSelect(event)" />
         <button class="primary-btn" style="padding: 0.55rem 0.9rem; font-size: 0.85rem; border-radius: 10px; white-space: nowrap;" title="Snap Meal Photo for AI Analysis" onclick="document.getElementById('vision-file-input').click()">
-          <span>📷</span>
+          <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: text-bottom;">photo_camera</span>
           <span style="display: none;" class="desktop-only-inline">Snap Meal</span>
         </button>
       </div>
@@ -207,19 +219,19 @@
           <span class="material-symbols-outlined" style="font-size: 1rem;">tune</span> Health Filter:
         </span>
         <button class="health-chip active" data-goal="general" onclick="window.appController?.setHealthGoal('general')">
-          🌐 General
+          <span class="material-symbols-outlined" style="font-size: 0.9rem; vertical-align: middle;">public</span> General
         </button>
         <button class="health-chip" data-goal="diabetic" onclick="window.appController?.setHealthGoal('diabetic')">
-          🌱 Diabetic Friendly
+          <span class="material-symbols-outlined" style="font-size: 0.9rem; vertical-align: middle;">eco</span> Diabetic Friendly
         </button>
         <button class="health-chip" data-goal="weight_loss" onclick="window.appController?.setHealthGoal('weight_loss')">
-          🔥 Weight Loss
+          <span class="material-symbols-outlined" style="font-size: 0.9rem; vertical-align: middle;">local_fire_department</span> Weight Loss
         </button>
         <button class="health-chip" data-goal="high_bp" onclick="window.appController?.setHealthGoal('high_bp')">
-          🫀 High BP / Low Sodium
+          <span class="material-symbols-outlined" style="font-size: 0.9rem; vertical-align: middle;">favorite</span> High BP / Low Sodium
         </button>
         <button class="health-chip" data-goal="pcos" onclick="window.appController?.setHealthGoal('pcos')">
-          🌸 PCOS Support
+          <span class="material-symbols-outlined" style="font-size: 0.9rem; vertical-align: middle;">spa</span> PCOS Support
         </button>
       </div>
     </section>
@@ -233,21 +245,21 @@
 
     <!-- AdSense Placement Slot (Non-disruptive) -->
     <div class="adsense-container">
-      <span>📢 Advertisement Placeholder (Google AdSense Slot)</span>
+      <span style="display: inline-flex; align-items: center; gap: 0.4rem;"><span class="material-symbols-outlined" style="font-size: 1.1rem;">campaign</span> Advertisement Placeholder (Google AdSense Slot)</span>
     </div>
 
     <!-- Voluntary UPI Donation Card -->
     <section class="donation-card">
       <div class="donation-content">
         <div class="donation-title">
-          <span>❤️</span>
+          <span class="material-symbols-outlined" style="color: #ef4444; font-size: 1.3rem;">favorite</span>
           <span>Support This Free Project</span>
         </div>
         <p class="donation-desc">HealthFood AI is 100% free and open to everyone. If you find this resource helpful,
           consider supporting our serverless infrastructure via UPI.</p>
       </div>
       <div class="upi-badge">
-        <span>📲 UPI:</span>
+        <span style="display: inline-flex; align-items: center; gap: 0.3rem;"><span class="material-symbols-outlined" style="font-size: 1rem;">smartphone</span> UPI:</span>
         <span>healthfood@upi</span>
       </div>
     </section>
@@ -273,7 +285,7 @@
     <div class="plate-bar-container">
       <div class="plate-bar-info" onclick="window.foodRenderer?.openPlateModal()">
         <div class="plate-icon-badge">
-          🍽️ <span id="plate-count-badge" class="plate-count-badge">0</span>
+          <span class="material-symbols-outlined" style="color: var(--primary);">restaurant_menu</span> <span id="plate-count-badge" class="plate-count-badge">0</span>
         </div>
         <div>
           <div class="plate-bar-title">My Meal Plate</div>
@@ -294,7 +306,7 @@
   <aside id="plate-drawer" class="plate-drawer">
     <div class="drawer-header">
       <div>
-        <h2 class="drawer-title">🍽️ My Meal Plate</h2>
+        <h2 class="drawer-title" style="display: flex; align-items: center; gap: 0.4rem;"><span class="material-symbols-outlined">restaurant_menu</span> My Meal Plate</h2>
         <div style="font-size: 0.85rem; color: var(--text-muted);">Real-time meal calorie & nutrient breakdown</div>
       </div>
       <button id="close-plate-btn" class="icon-btn" onclick="window.foodRenderer?.closePlateModal()">✕</button>
@@ -316,7 +328,7 @@
   <aside id="ingredient-modal" class="plate-drawer">
     <div class="drawer-header">
       <div>
-        <h2 class="drawer-title">🏷️ Ingredient Red-Flag Scanner</h2>
+        <h2 class="drawer-title" style="display: flex; align-items: center; gap: 0.4rem;"><span class="material-symbols-outlined">search_hands_free</span> Ingredient Red-Flag Scanner</h2>
         <div style="font-size: 0.85rem; color: var(--text-muted);">Scan packaged foods for hidden sugars, palm oil & red flags</div>
       </div>
       <button class="icon-btn" onclick="window.ingredientScannerController?.closeModal()">✕</button>
@@ -333,16 +345,16 @@
 
         <div style="margin-top: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
           <input type="file" id="ingredient-file-input" accept="image/*" capture="environment" style="display: none;" onchange="window.ingredientScannerController?.handleImageSelect(event)" />
-          <button class="secondary-btn" style="flex: 1; padding: 0.6rem;" onclick="document.getElementById('ingredient-file-input').click()">
-            📷 Take / Upload Photo
+          <button class="secondary-btn" style="flex: 1; padding: 0.6rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;" onclick="document.getElementById('ingredient-file-input').click()">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">photo_camera</span> Take / Upload Photo
           </button>
           <button class="icon-btn" style="color: var(--macro-fat);" onclick="window.ingredientScannerController?.clearImage()" title="Clear Image">✕</button>
         </div>
 
         <img id="ingredient-preview-img" style="display: none; max-width: 100%; height: 140px; object-fit: contain; margin-top: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color);" alt="Ingredient preview" />
 
-        <button class="primary-btn" style="width: 100%; margin-top: 1rem; padding: 0.75rem;" onclick="window.ingredientScannerController?.runAnalysis()">
-          <span>🔍</span>
+        <button class="primary-btn" style="width: 100%; margin-top: 1rem; padding: 0.75rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;" onclick="window.ingredientScannerController?.runAnalysis()">
+          <span class="material-symbols-outlined">search</span>
           <span>Analyze Packaged Ingredients</span>
         </button>
       </div>
@@ -351,7 +363,7 @@
   <aside id="vision-modal" class="plate-drawer">
     <div class="drawer-header">
       <div>
-        <h2 class="drawer-title">📷 Visual Food Photo Analyzer</h2>
+        <h2 class="drawer-title" style="display: flex; align-items: center; gap: 0.4rem;"><span class="material-symbols-outlined">photo_camera</span> Visual Food Photo Analyzer</h2>
         <div style="font-size: 0.85rem; color: var(--text-muted);">AI identifies foods $\rightarrow$ Verified D1 database computes nutrition</div>
       </div>
       <button class="icon-btn" onclick="window.appController?.closeVisionModal()">✕</button>
@@ -368,7 +380,7 @@
   <aside id="craving-modal" class="plate-drawer">
     <div class="drawer-header">
       <div>
-        <h2 class="drawer-title">🍿 Healthy Craving Swaps</h2>
+        <h2 class="drawer-title" style="display: flex; align-items: center; gap: 0.4rem;"><span class="material-symbols-outlined">fastfood</span> Healthy Craving Swaps</h2>
         <div style="font-size: 0.85rem; color: var(--text-muted);">Nutritious alternatives with up to 70% fewer calories</div>
       </div>
       <button class="icon-btn" onclick="window.appController?.closeCravingModal()">✕</button>
@@ -411,10 +423,15 @@
             <option value="250">1 Glass (250ml)</option>
           </select>
         </div>
-        <button id="drawer-add-plate-btn" class="primary-btn" onclick="window.foodRenderer?.addCurrentToPlate()">
-          <span>🍽️</span>
-          <span>Add to My Plate</span>
-        </button>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <button id="drawer-share-food-btn" class="secondary-btn" style="padding: 0.55rem 0.8rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.3rem;" onclick="window.foodRenderer?.shareCurrentFood()">
+            <span class="material-symbols-outlined" style="font-size: 1rem;">share</span> Share Facts
+          </button>
+          <button id="drawer-add-plate-btn" class="primary-btn" style="display: inline-flex; align-items: center; gap: 0.3rem;" onclick="window.foodRenderer?.addCurrentToPlate()">
+            <span class="material-symbols-outlined" style="font-size: 1rem;">restaurant_menu</span>
+            <span>Add to My Plate</span>
+          </button>
+        </div>
       </div>
 
       <!-- 1. Nutrition Summary Header -->
@@ -477,7 +494,7 @@
       </div>
       <div style="display: flex; align-items: center; gap: 0.5rem;">
         <button id="clear-chat-btn" class="icon-btn" title="Clear Chat"
-          onclick="window.chatbotController.clearChat()">🧹</button>
+          onclick="window.chatbotController.clearChat()"><span class="material-symbols-outlined">cleaning_services</span></button>
         <button id="close-chat-btn" class="icon-btn">✕</button>
       </div>
     </div>
@@ -510,8 +527,60 @@
     <p>© 2026 <strong>HealthFood AI</strong> — Developed by <strong><a href="https://github.com/manikumarsadhu" target="_blank" rel="noopener" style="color: var(--primary-color); text-decoration: none;">Mani Kumar Sadhu</a></strong>. Evidence-Based Nutrition & AI Assistant.</p>
   </footer>
 
+  <!-- Social Media Share Modal -->
+  <aside id="share-modal" class="plate-drawer">
+    <div class="drawer-header">
+      <div>
+        <h2 id="share-modal-title" class="drawer-title" style="display: flex; align-items: center; gap: 0.4rem;"><span class="material-symbols-outlined">share</span> Share Food Awareness Post</h2>
+        <div style="font-size: 0.82rem; color: var(--text-muted);">Spread verified food & health facts to friends & family</div>
+      </div>
+      <button class="icon-btn" onclick="window.shareManager?.closeShareModal()">✕</button>
+    </div>
+
+    <div class="drawer-body" style="padding: 1.25rem;">
+      <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; margin-bottom: 1.25rem;">
+        <div style="font-size: 0.78rem; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 0.4rem;">
+          Post Preview:
+        </div>
+        <div id="share-modal-preview" style="font-size: 0.88rem; color: var(--text-color); line-height: 1.5; white-space: pre-wrap; word-break: break-word; background: rgba(0,0,0,0.15); padding: 0.75rem; border-radius: 8px; border: 1px dashed var(--border-color);">
+          Loading post text...
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-bottom: 0.75rem;">Share Directly To Social Media</div>
+
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1.25rem;">
+        <button class="secondary-btn" style="padding: 0.75rem; border-radius: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.5rem; background: #25D366; color: #fff; border: none; cursor: pointer;" onclick="window.shareManager?.shareToPlatform('whatsapp')">
+          <span class="material-symbols-outlined" style="font-size: 1.2rem;">chat</span> WhatsApp
+        </button>
+        <button class="secondary-btn" style="padding: 0.75rem; border-radius: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.5rem; background: #000; color: #fff; border: 1px solid #333; cursor: pointer;" onclick="window.shareManager?.shareToPlatform('twitter')">
+          <span class="material-symbols-outlined" style="font-size: 1.2rem;">flutter_dash</span> Twitter / X
+        </button>
+        <button class="secondary-btn" style="padding: 0.75rem; border-radius: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.5rem; background: #1877F2; color: #fff; border: none; cursor: pointer;" onclick="window.shareManager?.shareToPlatform('facebook')">
+          <span class="material-symbols-outlined" style="font-size: 1.2rem;">public</span> Facebook
+        </button>
+        <button class="secondary-btn" style="padding: 0.75rem; border-radius: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.5rem; background: #0A66C2; color: #fff; border: none; cursor: pointer;" onclick="window.shareManager?.shareToPlatform('linkedin')">
+          <span class="material-symbols-outlined" style="font-size: 1.2rem;">work</span> LinkedIn
+        </button>
+        <button class="secondary-btn" style="padding: 0.75rem; border-radius: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.5rem; background: #24A1DE; color: #fff; border: none; cursor: pointer; grid-column: span 2;" onclick="window.shareManager?.shareToPlatform('telegram')">
+          <span class="material-symbols-outlined" style="font-size: 1.2rem;">send</span> Share on Telegram
+        </button>
+      </div>
+
+      <div style="display: flex; gap: 0.5rem;">
+        <button class="secondary-btn" style="flex: 1; padding: 0.65rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;" onclick="window.shareManager?.copyShareText(this)">
+          <span class="material-symbols-outlined" style="font-size: 1rem;">content_copy</span> Copy Post Text
+        </button>
+        <button class="primary-btn" style="flex: 1; padding: 0.65rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;" onclick="window.shareManager?.copyShareLink(this)">
+          <span class="material-symbols-outlined" style="font-size: 1rem;">link</span> Copy Link
+        </button>
+      </div>
+    </div>
+  </aside>
+
   <!-- JavaScript Modules -->
   <script src="js/api-client.js"></script>
+  <script src="js/share-manager.js"></script>
   <script src="js/plate-manager.js"></script>
   <script src="js/health-goals.js"></script>
   <script src="js/ingredient-scanner.js"></script>

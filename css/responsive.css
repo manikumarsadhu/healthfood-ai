@@ -1,40 +1,170 @@
+/* Responsive Design System for HealthFood AI */
+
 /* Mobile Devices (max-width: 640px) */
 @media (max-width: 640px) {
+  /* App Header & Navbar */
   .app-header {
-    padding: 0.75rem 1rem;
+    padding: 0.65rem 0.85rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
   }
 
   .header-container {
+    flex-wrap: wrap;
     gap: 0.5rem;
+    justify-content: space-between;
   }
 
   .brand-logo span {
-    font-size: 1.15rem;
-  }
-
-  .main-wrapper {
-    padding: 1rem;
-  }
-
-  .hero-card {
-    flex-direction: column;
-    padding: 1.1rem;
-    gap: 0.75rem;
-  }
-
-  .hero-icon {
-    width: 40px;
-    height: 40px;
     font-size: 1.1rem;
   }
 
-  .food-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
+  .header-actions {
+    gap: 0.35rem;
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 0.35rem;
   }
 
+  .select-control {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.82rem;
+    flex: 1;
+    max-width: 130px;
+  }
+
+  .header-actions .secondary-btn,
+  .header-actions .primary-btn {
+    padding: 0.45rem 0.65rem;
+    font-size: 0.8rem;
+    border-radius: 8px;
+    flex: 1;
+    justify-content: center;
+  }
+
+  /* Main Wrapper */
+  .main-wrapper {
+    padding: 0.75rem;
+  }
+
+  /* Spotlight & Daily Awareness Cards */
+  .hero-card {
+    flex-direction: column;
+    padding: 0.95rem;
+    gap: 0.65rem;
+    border-radius: 12px;
+  }
+
+  .hero-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  .hero-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
+
+  /* Search & Controls Section */
+  .controls-section {
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .search-box-container {
+    width: 100%;
+  }
+
+  .search-input {
+    font-size: 0.9rem;
+    padding: 0.65rem 0.75rem 0.65rem 2.3rem;
+  }
+
+  /* Scrollable Category Chips */
+  .category-chips-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.35rem;
+    scrollbar-width: none;
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .category-chips-wrapper::-webkit-scrollbar {
+    display: none;
+  }
+
+  .category-chip {
+    padding: 0.45rem 0.8rem;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Health Goals Filters */
+  .health-goal-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.35rem;
+    scrollbar-width: none;
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .health-goal-wrapper::-webkit-scrollbar {
+    display: none;
+  }
+
+  .health-chip {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Food Cards Grid (1 column on mobile) */
+  .food-grid {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .food-card {
+    border-radius: 12px;
+  }
+
+  .food-card-body {
+    padding: 0.95rem;
+  }
+
+  .macro-mini-meter {
+    gap: 0.35rem;
+  }
+
+  .macro-mini-item {
+    padding: 0.35rem;
+  }
+
+  /* Side Detail Drawer (Food Nutrition View) */
   .detail-drawer {
+    right: -100vw;
+    width: 100vw;
     max-width: 100vw;
+    height: 100vh;
+  }
+
+  .detail-drawer.open {
+    right: 0;
+  }
+
+  .drawer-header {
+    padding: 0.95rem 1.1rem;
+  }
+
+  .drawer-body {
+    padding: 0.95rem;
   }
 
   .macro-grid-full {
@@ -45,11 +175,72 @@
     grid-template-columns: 1fr;
   }
 
+  /* AI Assistant Chat Drawer */
   .chat-drawer {
     right: 0;
+    left: 0;
+    bottom: 0;
     width: 100vw;
-    height: 80vh;
+    height: 85vh;
+    max-width: 100vw;
     border-radius: 20px 20px 0 0;
+    z-index: 300;
+  }
+
+  .chat-messages {
+    padding: 0.85rem;
+  }
+
+  .chat-bubble {
+    max-width: 95%;
+    font-size: 0.88rem;
+    padding: 0.75rem 0.9rem;
+  }
+
+  .chat-input-area {
+    padding: 0.75rem;
+    gap: 0.4rem;
+  }
+
+  .chat-input {
+    font-size: 0.88rem;
+  }
+
+  /* Meal Plate & Legal Drawers */
+  .plate-drawer,
+  .legal-drawer {
+    width: 100vw;
+    max-width: 100vw;
+  }
+
+  /* Bottom Floating Plate Bar */
+  .plate-bar {
+    padding: 0.55rem 0.85rem;
+  }
+
+  .plate-bar-container {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .plate-bar-title {
+    font-size: 0.85rem;
+  }
+
+  .plate-bar-summary {
+    font-size: 0.78rem;
+  }
+
+  /* Modal Dialog Windows */
+  .modal-dialog {
+    width: 94%;
+    max-width: 94%;
+    padding: 1.1rem;
+    border-radius: 14px;
+  }
+
+  .desktop-only-inline {
+    display: none !important;
   }
 }
 
@@ -57,5 +248,20 @@
 @media (min-width: 641px) and (max-width: 1024px) {
   .food-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 1.1rem;
+  }
+
+  .main-wrapper {
+    padding: 1.25rem;
+  }
+
+  .detail-drawer {
+    max-width: 580px;
+    right: -600px;
+  }
+
+  .chat-drawer {
+    width: 480px;
+    height: 620px;
   }
 }

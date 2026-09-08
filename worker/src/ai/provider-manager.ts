@@ -110,6 +110,8 @@ export class OmniRouteProvider implements AIProvider {
             temperature: 0.3,
             max_tokens: 1000,
           }),
+        }).catch((err) => {
+          throw new ProviderUnavailableException(this.name, `Gateway at ${this.baseUrl} is unreachable or offline (${err.message || 'connection refused'})`);
         });
 
         const resText = await response.text();
@@ -592,8 +594,8 @@ export class AIProviderManager {
           console.warn(`[AIProviderManager] Provider ${provider.name} unavailable: ${err.message}. Looping to next provider...`);
           errors.push({ provider: provider.name, error: err.message });
         } else {
-          console.error(`[AIProviderManager] Error from ${provider.name}: ${err.message}. Looping to next provider...`);
-          errors.push({ provider: provider.name, error: err.message });
+          console.warn(`[AIProviderManager] ${provider.name} unavailable (${err.message || 'Connection failed'}). Looping to next provider...`);
+          errors.push({ provider: provider.name, error: err.message || String(err) });
         }
       }
     }

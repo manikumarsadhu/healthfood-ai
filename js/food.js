@@ -150,14 +150,14 @@ class FoodRenderer {
 
       this.foodGridEl.innerHTML = `
         <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1.5rem; color: var(--text-muted); background: var(--card-bg); border: 1px dashed var(--border-color); border-radius: 14px; margin: 1rem 0;">
-          <div style="font-size: 3rem; margin-bottom: 0.75rem;">🥑</div>
+          <div style="margin-bottom: 0.75rem;"><span class="material-symbols-outlined" style="font-size: 3.5rem; color: var(--primary);">search</span></div>
           <h3 style="color: var(--text-color); margin-bottom: 0.4rem; font-size: 1.2rem;">No exact catalog match for "${q || 'this item'}"</h3>
           <p style="font-size: 0.95rem; max-width: 480px; margin: 0 auto; color: var(--text-muted);" data-i18n="no_results">
             We don't have a verified database entry for this food yet. You can consult our AI Assistant for an instant AI nutritional breakdown!
           </p>
           <div style="margin-top: 1.25rem;">
             <button style="background: linear-gradient(135deg, var(--primary), #059669); color: #fff; border: none; padding: 0.8rem 1.6rem; border-radius: 10px; font-weight: 600; font-size: 0.95rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);" onclick="window.chatbotController.openChat('${aiPrompt.replace(/'/g, "\\'")}')">
-              <span>🤖</span>
+              <span class="material-symbols-outlined">smart_toy</span>
               <span>${buttonLabel}</span>
             </button>
           </div>
@@ -172,8 +172,8 @@ class FoodRenderer {
       const macros = food.macronutrients || {};
       const isVeg = food.vegetarian !== false;
       const vegBadgeHtml = isVeg
-        ? `<span class="badge-veg">🌱 ${window.languageManager?.t('veg_badge', 'Vegetarian')}</span>`
-        : `<span class="badge-nonveg">🍖 ${window.languageManager?.t('non_veg_badge', 'Non-Veg')}</span>`;
+        ? `<span class="badge-veg"><span class="material-symbols-outlined" style="font-size: 0.85rem; vertical-align: text-bottom;">eco</span> ${window.languageManager?.t('veg_badge', 'Vegetarian')}</span>`
+        : `<span class="badge-nonveg"><span class="material-symbols-outlined" style="font-size: 0.85rem; vertical-align: text-bottom;">kebab_dining</span> ${window.languageManager?.t('non_veg_badge', 'Non-Veg')}</span>`;
 
       // Evaluate against active health goal
       const evaluation = window.healthGoalsEngine?.evaluateFood(food, activeGoal) || {};
@@ -189,8 +189,8 @@ class FoodRenderer {
           <div class="food-card-header" style="background-image: url('${imgUrl}')">
             <div class="food-card-overlay">
               ${vegBadgeHtml}
-              <span style="background: rgba(0,0,0,0.7); color: #fff; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">
-                🔥 ${macros.calories || 0} cal
+              <span style="background: rgba(0,0,0,0.7); color: #fff; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.2rem;">
+                <span class="material-symbols-outlined" style="font-size: 0.85rem; color: #f97316;">local_fire_department</span> ${macros.calories || 0} cal
               </span>
             </div>
           </div>
@@ -263,7 +263,7 @@ class FoodRenderer {
         <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; padding: 1rem; margin-bottom: 1.25rem;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
             <div>
-              <span style="font-size: 1.6rem; font-weight: 700; color: var(--primary);">🔥 ${summary.calories || macros.calories || 0}</span>
+              <span style="font-size: 1.6rem; font-weight: 700; color: var(--primary); display: inline-flex; align-items: center; gap: 0.3rem;"><span class="material-symbols-outlined" style="font-size: 1.6rem; color: #f97316;">local_fire_department</span> ${summary.calories || macros.calories || 0}</span>
               <span style="font-size: 0.85rem; color: var(--text-muted);"> kcal / ${summary.serving_g || 100}g</span>
             </div>
             <div style="text-align: right;">
@@ -272,9 +272,9 @@ class FoodRenderer {
             </div>
           </div>
           <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; text-align: center; background: rgba(0,0,0,0.2); padding: 0.6rem; border-radius: 8px; font-size: 0.8rem;">
-            <div>💧 Water: <strong>${summary.water_g || 80}g</strong></div>
-            <div>🍬 Sugar: <strong>${summary.sugar_g || 2}g</strong></div>
-            <div>🧂 Sodium: <strong>${summary.sodium_mg || 10}mg</strong></div>
+            <div><span class="material-symbols-outlined" style="font-size: 0.95rem; color: #3b82f6; vertical-align: text-bottom;">water_drop</span> Water: <strong>${summary.water_g || 80}g</strong></div>
+            <div><span class="material-symbols-outlined" style="font-size: 0.95rem; color: #ec4899; vertical-align: text-bottom;">cookie</span> Sugar: <strong>${summary.sugar_g || 2}g</strong></div>
+            <div><span class="material-symbols-outlined" style="font-size: 0.95rem; color: #eab308; vertical-align: text-bottom;">grain</span> Sodium: <strong>${summary.sodium_mg || 10}mg</strong></div>
           </div>
         </div>
       `;
@@ -411,7 +411,7 @@ class FoodRenderer {
       const p = food.suggested_portion || { title: `1 Serving (${food.name})`, grams: 100, calories: macros.calories || 100, macros_text: `≈ ${macros.calories || 100} kcal` };
       portionEl.innerHTML = `
         <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.85rem; font-size: 0.88rem;">
-          <div style="font-weight: 700; color: var(--text-color); margin-bottom: 0.25rem;">🍽️ ${p.title} (≈ ${p.grams}g)</div>
+          <div style="font-weight: 700; color: var(--text-color); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.3rem;"><span class="material-symbols-outlined" style="font-size: 1rem; color: var(--primary);">restaurant</span> ${p.title} (≈ ${p.grams}g)</div>
           <div style="color: var(--primary); font-weight: 600; font-size: 0.85rem;">${p.macros_text || `≈ ${p.calories} kcal`}</div>
         </div>
       `;
@@ -446,6 +446,20 @@ class FoodRenderer {
     if (window.notificationManager) {
       window.notificationManager.showToast(`Added ${this.currentFood.name} (${this.selectedDetailGrams}g) to My Meal Plate!`, 'success');
     }
+  }
+
+  shareCurrentFood() {
+    if (!this.currentFood || !window.shareManager) return;
+    const macros = this.currentFood.macronutrients || {};
+    const text = `${this.currentFood.name} Nutrition Profile (${this.selectedDetailGrams}g): ${macros.calories || 0} kcal | ${macros.protein_g || 0}g Protein | ${macros.carbs_g || 0}g Carbs | ${macros.fiber_g || 0}g Fiber. ${this.currentFood.description || ''}`;
+
+    window.shareManager.share({
+      title: `Nutrition Facts: ${this.currentFood.name}`,
+      text: text,
+      foodName: this.currentFood.name,
+      foodSlug: this.currentFood.slug,
+      url: window.location.origin + window.location.pathname
+    });
   }
 
   openPlateModal() {

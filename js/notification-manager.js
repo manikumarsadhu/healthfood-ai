@@ -113,7 +113,7 @@ class NotificationManager {
   updateUI() {
     const btn = document.getElementById('notification-toggle-btn');
     if (btn) {
-      btn.innerHTML = this.settings.enabled ? '🔔' : '🔕';
+      btn.innerHTML = this.settings.enabled ? '<span class="material-symbols-outlined">notifications</span>' : '<span class="material-symbols-outlined">notifications_off</span>';
       btn.setAttribute('title', this.settings.enabled ? 'Notifications Enabled (Click to disable)' : 'Notifications Disabled (Click to enable)');
       if (this.settings.enabled) {
         btn.style.borderColor = 'var(--primary)';

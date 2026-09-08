@@ -80,7 +80,90 @@ Output ONLY valid raw JSON with NO markdown formatting, NO triple backticks:
       model: aiResponse.modelName
     });
   } catch (err: any) {
-    console.error("[CravingSwap] AI Provider Error:", err);
-    return errorResponse("Failed to generate craving swaps. Please try again.", 500, err.message);
+    console.warn("[CravingSwap] AI Provider Error, returning rule-based fallback:", err.message || err);
+    return jsonResponse({
+      success: true,
+      result: getFallbackSwaps(rawCraving),
+      normalizedQuery: normalizedCraving,
+      provider: "HealthFood AI Fallback Engine",
+      model: "rule-based"
+    });
   }
+}
+
+function getFallbackSwaps(rawCraving: string): CravingSwapResult {
+  const q = rawCraving.toLowerCase();
+  let swaps = [];
+
+  if (q.includes("chicken") || q.includes("fried")) {
+    swaps = [
+      {
+        name: "Air-Fried Crispy Chicken Tenders",
+        reason: "Coated in almond flour or oats and air-fried for a crunchy crust with 65% less fat and calories.",
+        estimatedCaloriesSavePercent: 65
+      },
+      {
+        name: "Baked Buffalo Cauliflower Bites",
+        reason: "High-fiber plant alternative with rich spicy crunch and 80% fewer calories.",
+        estimatedCaloriesSavePercent: 80
+      }
+    ];
+  } else if (q.includes("chip") || q.includes("potato")) {
+    swaps = [
+      {
+        name: "Roasted Makhana (Fox Nuts)",
+        reason: "Light, crunchy snack rich in antioxidants with 70% fewer calories than potato chips.",
+        estimatedCaloriesSavePercent: 70
+      },
+      {
+        name: "Air-Fried Crispy Chickpeas",
+        reason: "High-fiber and plant protein alternative that satisfies salty crunch cravings.",
+        estimatedCaloriesSavePercent: 60
+      }
+    ];
+  } else if (q.includes("boba") || q.includes("tea") || q.includes("drink")) {
+    swaps = [
+      {
+        name: "Iced Green Tea with Chia Seeds & Honey",
+        reason: "Provides natural antioxidants and fiber-rich chia seeds instead of sugary tapioca syrup.",
+        estimatedCaloriesSavePercent: 75
+      },
+      {
+        name: "Unsweetened Matcha Almond Latte",
+        reason: "Creamy, rich texture with L-theanine and 80% lower calories.",
+        estimatedCaloriesSavePercent: 80
+      }
+    ];
+  } else if (q.includes("chocolate") || q.includes("sweet") || q.includes("cake")) {
+    swaps = [
+      {
+        name: "Dark Chocolate (70%+) with Almonds",
+        reason: "Rich in polyphenols and magnesium with 40% less refined sugar per serving.",
+        estimatedCaloriesSavePercent: 45
+      },
+      {
+        name: "Cacao Avocado Mousse",
+        reason: "Creamy decadent texture powered by healthy monounsaturated fats.",
+        estimatedCaloriesSavePercent: 65
+      }
+    ];
+  } else {
+    swaps = [
+      {
+        name: "Air-Fried Spiced Makhana / Chickpeas",
+        reason: "High-protein, high-fiber crunchy alternative with 70% fewer calories.",
+        estimatedCaloriesSavePercent: 70
+      },
+      {
+        name: "Fresh Fruit & Nut Bowl",
+        reason: "Natural sweetness and essential micronutrients without processed additives.",
+        estimatedCaloriesSavePercent: 55
+      }
+    ];
+  }
+
+  return {
+    craving: rawCraving,
+    swaps
+  };
 }

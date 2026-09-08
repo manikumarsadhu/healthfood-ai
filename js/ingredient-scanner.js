@@ -118,7 +118,7 @@ class IngredientScannerController {
     if (this.resultsContainerEl) {
       this.resultsContainerEl.innerHTML = `
         <div style="text-align: center; padding: 2rem 1rem; color: var(--text-muted);">
-          <div style="font-size: 2rem; margin-bottom: 0.5rem;" class="loading-spinner">🧪</div>
+          <div style="font-size: 2rem; margin-bottom: 0.5rem;" class="loading-spinner"><span class="material-symbols-outlined" style="font-size: 2.2rem; color: var(--primary);">science</span></div>
           <div>Analyzing packaged ingredients via AI safety engine...</div>
         </div>
       `;
@@ -135,8 +135,8 @@ class IngredientScannerController {
       console.error('Ingredient analysis error:', err);
       if (this.resultsContainerEl) {
         this.resultsContainerEl.innerHTML = `
-          <div style="text-align: center; padding: 1.5rem; color: var(--macro-fat); background: rgba(239,68,68,0.1); border-radius: 10px;">
-            ⚠️ Analysis failed. Please check your internet connection or try again.
+          <div style="text-align: center; padding: 1.5rem; color: var(--macro-fat); background: rgba(239,68,68,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">warning</span> Analysis failed. Please check your internet connection or try again.
           </div>
         `;
       }
@@ -169,12 +169,12 @@ class IngredientScannerController {
         </div>
 
         ${result.redFlags && result.redFlags.length > 0 ? `
-          <div class="section-label" style="margin-top: 1rem; color: var(--macro-fat);">⚠️ Ingredients to Consider</div>
+          <div class="section-label" style="margin-top: 1rem; color: var(--macro-fat); display: flex; align-items: center; gap: 0.3rem;"><span class="material-symbols-outlined" style="font-size: 1rem;">warning</span> Ingredients to Consider</div>
           <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
             ${result.redFlags.map(rf => `
               <div style="background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); border-radius: 8px; padding: 0.6rem 0.88rem; font-size: 0.85rem;">
                 <div style="font-weight: 700; color: var(--macro-fat); display: flex; justify-content: space-between;">
-                  <span>🔍 ${rf.ingredient}</span>
+                  <span style="display: inline-flex; align-items: center; gap: 0.2rem;"><span class="material-symbols-outlined" style="font-size: 0.9rem;">search</span> ${rf.ingredient}</span>
                   <span style="font-size: 0.75rem; text-transform: uppercase; padding: 0.1rem 0.4rem; border-radius: 4px; background: rgba(239,68,68,0.2);">${rf.severity}</span>
                 </div>
                 <div style="color: var(--text-secondary); margin-top: 0.2rem; font-size: 0.8rem;">${rf.reason}</div>
@@ -184,7 +184,7 @@ class IngredientScannerController {
         ` : ''}
 
         ${result.positiveIngredients && result.positiveIngredients.length > 0 ? `
-          <div class="section-label" style="margin-top: 1rem; color: var(--primary);">🟢 Nutritious Highlights</div>
+          <div class="section-label" style="margin-top: 1rem; color: var(--primary); display: flex; align-items: center; gap: 0.3rem;"><span class="material-symbols-outlined" style="font-size: 1rem;">check_circle</span> Nutritious Highlights</div>
           <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem;">
             ${result.positiveIngredients.map(pos => `
               <span style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: var(--primary); padding: 0.3rem 0.65rem; border-radius: 16px; font-size: 0.8rem; font-weight: 500;">✓ ${pos}</span>
@@ -194,7 +194,7 @@ class IngredientScannerController {
 
         ${result.recommendation ? `
           <div style="margin-top: 1rem; background: rgba(255,255,255,0.04); border-left: 3px solid var(--primary); padding: 0.65rem 0.85rem; font-size: 0.83rem; color: var(--text-secondary);">
-            💡 <strong>Recommendation:</strong> ${result.recommendation}
+            <span class="material-symbols-outlined" style="font-size: 0.95rem; vertical-align: text-bottom; color: var(--primary);">lightbulb</span> <strong>Recommendation:</strong> ${result.recommendation}
           </div>
         ` : ''}
       </div>

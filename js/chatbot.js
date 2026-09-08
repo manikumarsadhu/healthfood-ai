@@ -8,6 +8,8 @@ class ChatbotController {
     this.chatMessagesEl = document.getElementById('chat-messages');
     this.chatInputEl = document.getElementById('chat-input');
     this.isOpen = false;
+    this.isGenerating = false;
+    this.currentAbortController = null;
   }
 
   toggleChat() {
@@ -41,9 +43,18 @@ class ChatbotController {
     if (modalBackdropEl) {
       modalBackdropEl.classList.remove('open');
     }
+    if (this.isGenerating) {
+      this.cancelGeneration();
+    }
   }
 
   async sendUserQuestion(questionText = null) {
+    // If generation is already in progress, button press acts as Stop Generation
+    if (this.isGenerating) {
+      this.cancelGeneration();
+      return;
+    }
+
     const text = questionText || (this.chatInputEl ? this.chatInputEl.value.trim() : '');
     if (!text) return;
 
@@ -52,22 +63,78 @@ class ChatbotController {
     // Append user message
     this.appendMessage(text, 'user');
 
+    // Set generating state and AbortController
+    this.isGenerating = true;
+    this.currentAbortController = new AbortController();
+    this.updateSendButtonState(true);
+
     // Show loading bubble
     const loadingId = this.appendLoading();
 
-    // Call API
-    const activeFood = window.foodRenderer?.currentFood;
-    const currentLang = window.languageManager?.currentLang || 'en';
-    const res = await window.apiClient.askAI(text, activeFood?.slug, currentLang);
+    try {
+      const activeFood = window.foodRenderer?.currentFood;
+      const currentLang = window.languageManager?.currentLang || 'en';
+      const res = await window.apiClient.askAI(text, activeFood?.slug, currentLang, 'basic', this.currentAbortController.signal);
 
-    // Remove loading bubble
-    this.removeLoading(loadingId);
+      // If cancelled, exit cleanly
+      if (this.currentAbortController?.signal.aborted || (res && res.cancelled)) {
+        return;
+      }
 
-    // Append AI response
-    if (res && res.answer) {
-      this.appendMessage(res.answer, 'ai', res.provider, text);
+      this.removeLoading(loadingId);
+
+      // Append AI response
+      if (res && res.answer) {
+        this.appendMessage(res.answer, 'ai', res.provider, text);
+      } else {
+        this.appendMessage("Sorry, I could not generate a response right now. Please try again.", 'ai');
+      }
+    } catch (e) {
+      if (e.name === 'AbortError') return;
+      this.removeLoading(loadingId);
+      this.appendMessage("An error occurred while generating response.", 'ai');
+    } finally {
+      this.isGenerating = false;
+      this.currentAbortController = null;
+      this.removeLoading(loadingId);
+      this.updateSendButtonState(false);
+    }
+  }
+
+  cancelGeneration() {
+    if (this.currentAbortController) {
+      this.currentAbortController.abort();
+      this.currentAbortController = null;
+    }
+    this.isGenerating = false;
+    this.removeLoading();
+    this.updateSendButtonState(false);
+
+    if (this.chatMessagesEl) {
+      const bubble = document.createElement('div');
+      bubble.className = 'chat-bubble ai system-cancelled';
+      bubble.style.cssText = 'font-style: italic; color: var(--text-muted); opacity: 0.85; font-size: 0.82rem; background: rgba(255,255,255,0.03); border: 1px dashed var(--border-color); margin-bottom: 0.5rem; border-radius: 8px; padding: 0.5rem 0.8rem;';
+      bubble.innerHTML = '<span class="material-symbols-outlined" style="font-size: 0.95rem; vertical-align: middle; margin-right: 0.25rem; color: #ef4444;">block</span> Generation cancelled.';
+      this.chatMessagesEl.appendChild(bubble);
+      this.chatMessagesEl.scrollTop = this.chatMessagesEl.scrollHeight;
+    }
+
+    if (window.notificationManager) {
+      window.notificationManager.showToast('Response generation stopped.', 'info');
+    }
+  }
+
+  updateSendButtonState(isGenerating) {
+    const sendBtn = document.getElementById('chat-send-btn');
+    if (!sendBtn) return;
+    if (isGenerating) {
+      sendBtn.classList.add('chat-send-btn-stop');
+      sendBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1rem; vertical-align: middle; margin-right: 0.2rem;">stop</span> Stop';
+      sendBtn.title = 'Click to stop generating response';
     } else {
-      this.appendMessage("Sorry, I could not generate a response right now. Please try again.", 'ai');
+      sendBtn.classList.remove('chat-send-btn-stop');
+      sendBtn.innerHTML = 'Send';
+      sendBtn.title = 'Send message';
     }
   }
 
@@ -78,15 +145,15 @@ class ChatbotController {
         Hello! I'm your HealthFood AI Assistant. You can ask me questions about calories, vitamins, food pairing, or how specific foods support your health goals.
       </div>
       <div class="chat-starter-suggestions" style="margin-top: 0.8rem; display: flex; flex-direction: column; gap: 0.5rem;">
-        <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">💡 Try asking:</div>
+        <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; display: flex; align-items: center; gap: 0.25rem;"><span class="material-symbols-outlined" style="font-size: 0.95rem; color: var(--primary);">lightbulb</span> Try asking:</div>
         <button class="chat-starter-chip" onclick="window.chatbotController.sendUserQuestion('What are the top 5 high-protein vegetarian foods?')">
-          🥑 Top 5 High-Protein Vegetarian Foods
+          <span class="material-symbols-outlined" style="font-size: 0.9rem; vertical-align: middle;">fitness_center</span> Top 5 High-Protein Vegetarian Foods
         </button>
         <button class="chat-starter-chip" onclick="window.chatbotController.sendUserQuestion('Which fruits are best for blood sugar management?')">
-          🍎 Best Fruits for Blood Sugar Management
+          <span class="material-symbols-outlined" style="font-size: 0.9rem; vertical-align: middle;">monitoring</span> Best Fruits for Blood Sugar Management
         </button>
         <button class="chat-starter-chip" onclick="window.chatbotController.sendUserQuestion('How much fiber should I consume daily for gut health?')">
-          🥗 Fiber Goals for Gut Health & Digestion
+          <span class="material-symbols-outlined" style="font-size: 0.9rem; vertical-align: middle;">eco</span> Fiber Goals for Gut Health & Digestion
         </button>
       </div>
     `;
@@ -110,10 +177,25 @@ class ChatbotController {
 
       contentHtml += `
         <div class="chat-footer-actions">
-          <span style="font-size: 0.7rem; color: var(--text-muted);">⚡ ${providerInfo || 'HealthFood AI'}</span>
-          <div style="display: flex; gap: 0.4rem;">
-            <button class="chat-action-link" onclick="window.chatbotController.copyResponse(this)">📋 Copy</button>
-            <a href="${chatGptLink}" target="_blank" rel="noopener noreferrer" class="chat-action-link" style="text-decoration: none;">💬 Open in ChatGPT ↗</a>
+          <div class="chat-action-icons">
+            <button class="chat-icon-btn" title="Copy response" onclick="window.chatbotController.copyResponse(this)">
+              <span class="material-symbols-outlined">content_copy</span>
+            </button>
+            <button class="chat-icon-btn" title="Dislike response" onclick="window.chatbotController.feedbackResponse(this, false)">
+              <span class="material-symbols-outlined">thumb_down</span>
+            </button>
+            <button class="chat-icon-btn" title="Like response" onclick="window.chatbotController.feedbackResponse(this, true)">
+              <span class="material-symbols-outlined">thumb_up</span>
+            </button>
+            <button class="chat-icon-btn" title="Share response" onclick="window.chatbotController.shareResponse(this)">
+              <span class="material-symbols-outlined">ios_share</span>
+            </button>
+            <button class="chat-icon-btn" title="Regenerate response" onclick="window.chatbotController.regenerateResponse(this)">
+              <span class="material-symbols-outlined">refresh</span>
+            </button>
+            <button class="chat-icon-btn" title="More options" onclick="window.chatbotController.moreOptions(this)">
+              <span class="material-symbols-outlined">more_horiz</span>
+            </button>
           </div>
         </div>
       `;
@@ -123,7 +205,7 @@ class ChatbotController {
       if (followUps.length > 0) {
         contentHtml += `
           <div class="chat-followup-container">
-            ${followUps.map(f => `<button class="chat-followup-chip" onclick="window.chatbotController.sendUserQuestion('${f.replace(/'/g, "\\'")}')">👉 ${f}</button>`).join('')}
+            ${followUps.map(f => `<button class="chat-followup-chip" onclick="window.chatbotController.sendUserQuestion('${f.replace(/'/g, "\\'")}')"><span class="material-symbols-outlined" style="font-size: 0.85rem; vertical-align: middle;">arrow_forward</span> ${f}</button>`).join('')}
           </div>
         `;
       }
@@ -137,12 +219,46 @@ class ChatbotController {
   copyResponse(btnEl) {
     const bubble = btnEl.closest('.chat-bubble');
     if (!bubble) return;
-    const textToCopy = bubble.innerText.replace(/⚡ Powered by.*|📋 Copy|💬 Open in ChatGPT ↗|👉.*/g, '').trim();
+    const textToCopy = bubble.innerText.replace(/content_copy|thumb_down|thumb_up|ios_share|refresh|more_horiz/g, '').trim();
     navigator.clipboard.writeText(textToCopy).then(() => {
-      const originalText = btnEl.innerText;
-      btnEl.innerText = '✅ Copied!';
-      setTimeout(() => btnEl.innerText = originalText, 2000);
+      btnEl.style.color = '#10b981';
+      setTimeout(() => btnEl.style.color = '', 2000);
+      if (window.notificationManager) {
+        window.notificationManager.showToast('Copied response to clipboard!', 'success');
+      }
     }).catch(() => { });
+  }
+
+  feedbackResponse(btnEl, isPositive) {
+    btnEl.style.color = isPositive ? '#10b981' : '#ef4444';
+    if (window.notificationManager) {
+      window.notificationManager.showToast(isPositive ? 'Thanks for your positive feedback!' : 'Feedback received. We will improve!', 'info');
+    }
+  }
+
+  shareResponse(btnEl) {
+    const bubble = btnEl.closest('.chat-bubble');
+    if (!bubble) return;
+    const textToShare = bubble.innerText.slice(0, 250);
+    if (navigator.share) {
+      navigator.share({ title: 'HealthFood AI', text: textToShare, url: window.location.href });
+    } else {
+      this.copyResponse(btnEl);
+    }
+  }
+
+  regenerateResponse(btnEl) {
+    const userBubbles = this.chatMessagesEl.querySelectorAll('.chat-bubble.user');
+    if (userBubbles.length > 0) {
+      const lastQuestion = userBubbles[userBubbles.length - 1].textContent.trim();
+      this.sendUserQuestion(lastQuestion);
+    }
+  }
+
+  moreOptions(btnEl) {
+    if (window.notificationManager) {
+      window.notificationManager.showToast('Options: Powered by HealthFood AI Engine', 'info');
+    }
   }
 
   getFollowUpQuestions(text) {
@@ -166,13 +282,18 @@ class ChatbotController {
 
     let html = markdown;
 
+    // Headings
+    html = html.replace(/^### (.*$)/gim, '<h3 class="chat-title">$1</h3>');
+    html = html.replace(/^## (.*$)/gim, '<h2 class="chat-title">$1</h2>');
+    html = html.replace(/^# (.*$)/gim, '<h1 class="chat-title">$1</h1>');
+
     // Parse Markdown Tables
     const tableRegex = /((?:(?:\|[^\n]+\|\n)+))/g;
     html = html.replace(tableRegex, (match) => {
       const lines = match.trim().split('\n').filter(line => line.includes('|'));
       if (lines.length < 2) return match;
 
-      let tableHtml = '<table>';
+      let tableHtml = '<table class="chat-table">';
       let inBody = false;
 
       lines.forEach((line, idx) => {
@@ -181,7 +302,9 @@ class ChatbotController {
         const cells = line.split('|').map(c => c.trim()).filter((c, i, a) => i > 0 && i < a.length - 1);
         if (idx === 0) {
           tableHtml += '<thead><tr>';
-          cells.forEach(c => tableHtml += `<th>${c}</th>`);
+          cells.forEach((c, cIdx) => {
+            tableHtml += `<th class="${cIdx === 0 ? 'text-left' : 'text-right'}">${c}</th>`;
+          });
           tableHtml += '</tr></thead>';
         } else {
           if (!inBody) {
@@ -189,7 +312,9 @@ class ChatbotController {
             inBody = true;
           }
           tableHtml += '<tr>';
-          cells.forEach(c => tableHtml += `<td>${c}</td>`);
+          cells.forEach((c, cIdx) => {
+            tableHtml += `<td class="${cIdx === 0 ? 'text-left' : 'text-right'}">${c}</td>`;
+          });
           tableHtml += '</tr>';
         }
       });
@@ -199,18 +324,13 @@ class ChatbotController {
       return tableHtml;
     });
 
-    // Headings
-    html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-    html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-    html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-
     // Bold & Italics
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
 
     // Bullet lists
     html = html.replace(/^\- (.*$)/gim, '<li>$1</li>');
-    html = html.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+    html = html.replace(/(<li>.*<\/li>)/gs, '<ul class="chat-list">$1</ul>');
 
     // Line breaks
     html = html.replace(/\n\n/g, '<br/><br/>');
@@ -221,20 +341,34 @@ class ChatbotController {
 
   appendLoading() {
     if (!this.chatMessagesEl) return null;
+    this.removeLoading();
     const id = 'loading-' + Date.now();
     const bubble = document.createElement('div');
-    bubble.className = 'chat-bubble ai';
+    bubble.className = 'chat-bubble ai chat-loading-bubble';
     bubble.id = id;
-    bubble.innerHTML = `<em>🤖 Thinking...</em>`;
+    bubble.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 1rem;">
+        <span style="display: flex; align-items: center; gap: 0.45rem;">
+          <span class="material-symbols-outlined spin-icon" style="font-size: 1.1rem; color: var(--primary);">smart_toy</span>
+          <em>Thinking...</em>
+        </span>
+        <button class="chat-stop-btn" onclick="window.chatbotController.cancelGeneration()" title="Stop generation">
+          <span class="material-symbols-outlined" style="font-size: 0.9rem; vertical-align: middle;">stop_circle</span> Stop
+        </button>
+      </div>
+    `;
     this.chatMessagesEl.appendChild(bubble);
     this.chatMessagesEl.scrollTop = this.chatMessagesEl.scrollHeight;
     return id;
   }
 
-  removeLoading(id) {
-    if (!id) return;
-    const el = document.getElementById(id);
-    if (el) el.remove();
+  removeLoading(id = null) {
+    if (id) {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    }
+    const loadingBubbles = this.chatMessagesEl?.querySelectorAll('.chat-loading-bubble');
+    if (loadingBubbles) loadingBubbles.forEach(el => el.remove());
   }
 
   triggerQuickAction(actionType) {
