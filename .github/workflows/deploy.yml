@@ -79,4 +79,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: 'worker'
+          wranglerVersion: '4.122.0'
+
 
